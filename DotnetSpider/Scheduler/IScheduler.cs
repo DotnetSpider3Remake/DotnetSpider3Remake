@@ -42,15 +42,18 @@ namespace DotnetSpider.Scheduler
         Task PushAsync(IEnumerable<Request> requests);
 
         /// <summary>
-        /// 取得一个需要处理的请求对象
+        /// 取得一个需要处理的请求对象。
+        /// 如果队列为空，会一直阻塞等待。
+        /// 仅在执行Dispose后返回null。
         /// </summary>
-        /// <returns>请求对象</returns>
+        /// <returns>请求对象，仅在执行Dispose后返回null。</returns>
         Request Poll();
 
         /// <summary>
-        /// 异步取得一个需要处理的请求对象
+        /// 异步取得一个需要处理的请求对象。
+        /// 仅在执行Dispose后返回null。
         /// </summary>
-        /// <returns>请求对象</returns>
+        /// <returns>请求对象，仅在执行Dispose后返回null。</returns>
         Task<Request> PollAsync();
 
         /// <summary>

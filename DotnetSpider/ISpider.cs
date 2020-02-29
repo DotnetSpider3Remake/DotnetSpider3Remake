@@ -5,14 +5,15 @@ using DotnetSpider.Scheduler;
 using DotnetSpider.Downloader;
 using System;
 using System.Collections.Generic;
+using DotnetSpider.Runner;
 
-namespace DotnetSpider.Core
+namespace DotnetSpider
 {
     /// <summary>
     /// 爬虫接口定义。
     /// IDisposable
     /// </summary>
-    public interface ISpider : IDisposable, IRunnable, IControllable, IRecordable
+    public interface ISpider : IDisposable, IRunnable, IRecordable
     {
         /// <summary>
         /// URL调度队列

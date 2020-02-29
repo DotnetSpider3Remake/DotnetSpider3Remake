@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace DotnetSpider.Core
+namespace DotnetSpider.Runner
 {
     public interface IRunnable : IControllable
     {
