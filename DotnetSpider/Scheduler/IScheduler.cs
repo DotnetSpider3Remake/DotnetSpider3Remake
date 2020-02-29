@@ -2,6 +2,7 @@ using DotnetSpider.Monitor;
 using DotnetSpider.Downloader;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DotnetSpider.Scheduler
 {
@@ -12,7 +13,7 @@ namespace DotnetSpider.Scheduler
     public interface IScheduler : IDisposable, IRecordable
     {
         /// <summary>
-        /// 遍历方式
+        /// 遍历方式，仅能在任务运行前修改。
         /// </summary>
         TraverseStrategy TraverseStrategy { get; set; }
 
@@ -29,10 +30,28 @@ namespace DotnetSpider.Scheduler
         void Push(IEnumerable<Request> requests);
 
         /// <summary>
+        /// 异步添加请求对象到队列
+        /// </summary>
+        /// <param name="request">请求对象</param>
+        Task PushAsync(Request request);
+
+        /// <summary>
+        /// 异步添加多个请求对象到队列。
+        /// </summary>
+        /// <param name="requests">请求对象们</param>
+        Task PushAsync(IEnumerable<Request> requests);
+
+        /// <summary>
         /// 取得一个需要处理的请求对象
         /// </summary>
         /// <returns>请求对象</returns>
         Request Poll();
+
+        /// <summary>
+        /// 异步取得一个需要处理的请求对象
+        /// </summary>
+        /// <returns>请求对象</returns>
+        Task<Request> PollAsync();
 
         /// <summary>
         /// 清空队列
