@@ -2,6 +2,19 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Product>DotnetSpider 3 Remake</Product>
+    <PackageId>DotnetSpider3Remake</PackageId>
+    <Authors>sanjusss@qq.com</Authors>
+    <Description>A .NET Standard web crawling library similar to WebMagic and Scrapy.  
+It is a remake of DotnetSpider 3.x.</Description>
+    <Copyright>Copyright (c) 2020 DotnetSpider 3 Remake</Copyright>
+    <PackageProjectUrl>https://github.com/DotnetSpider3Remake/DotnetSpider3Remake</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DotnetSpider3Remake/DotnetSpider3Remake</RepositoryUrl>
+    <RepositoryType>GIT</RepositoryType>
+    <Version>0.0.1</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageTags>DotnetSpider;crawler;dotnet core</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
