@@ -19,6 +19,7 @@ It is a remake of DotnetSpider 3.x.</Description>
 
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.8" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
 </Project>
