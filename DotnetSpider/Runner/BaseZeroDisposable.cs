@@ -29,10 +29,10 @@ namespace DotnetSpider.Runner
             }
         }
 
-        private TimeSpan _maxDisposeWait = TimeSpan.MaxValue;
+        private TimeSpan _maxDisposeWait = TimeSpan.FromMinutes(1);
         private readonly object _maxDisposeWaitLocker = new object();
         /// <summary>
-        /// 等待Dispose完成的最长时间，默认为TimeSpan.MaxValue。
+        /// 等待Dispose完成的最长时间，默认为1分钟。
         /// </summary>
         protected TimeSpan MaxDisposeWait
         {

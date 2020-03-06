@@ -170,18 +170,18 @@ namespace DotnetSpider.Downloader
         {
             unchecked
             {
-                int c = (int)2166136261;
-                c = (c * 16777619) ^ (Accept?.GetHashCode() ?? 0);
-                c = (c * 16777619) ^ CompressMode.GetHashCode();
-                c = (c * 16777619) ^ (Content?.GetHashCode() ?? 0);
-                c = (c * 16777619) ^ (ContentType?.GetHashCode() ?? 0);
-                c = (c * 16777619) ^ (EncodingName?.GetHashCode() ?? 0);
-                c = (c * 16777619) ^ (Headers?.GetHashCode() ?? 0);
-                c = (c * 16777619) ^ (Method?.GetHashCode() ?? 0);
-                c = (c * 16777619) ^ (Origin?.GetHashCode() ?? 0);
-                c = (c * 16777619) ^ (Referer?.GetHashCode() ?? 0);
-                c = (c * 16777619) ^ (Url?.GetHashCode() ?? 0);
-                c = (c * 16777619) ^ (UserAgent?.GetHashCode() ?? 0);
+                int c = HashCode.BeginCode;
+                c = HashCode.GetHashCode(c, Accept);
+                c = HashCode.GetHashCode(c, CompressMode);
+                c = HashCode.GetHashCode(c, Content);
+                c = HashCode.GetHashCode(c, ContentType);
+                c = HashCode.GetHashCode(c, EncodingName);
+                c = HashCode.GetHashCode(c, Headers);
+                c = HashCode.GetHashCode(c, Method);
+                c = HashCode.GetHashCode(c, Origin);
+                c = HashCode.GetHashCode(c, Referer);
+                c = HashCode.GetHashCode(c, Url);
+                c = HashCode.GetHashCode(c, UserAgent);
                 return c;
             }
         }

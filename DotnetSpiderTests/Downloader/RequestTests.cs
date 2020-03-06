@@ -101,8 +101,10 @@ namespace DotnetSpider.Downloader.Tests
 
         #endregion
 
+        #region GetHashCode
+
         [TestMethod()]
-        public void GetHashCodeTest()
+        public void GetHashCodeTest0()
         {
             var a = new Request();
             var b = new Request();
@@ -110,6 +112,35 @@ namespace DotnetSpider.Downloader.Tests
             b.Origin = "test";
             Assert.IsTrue(a.GetHashCode() != b.GetHashCode());
         }
+
+        [TestMethod()]
+        public void GetHashCodeTest1()
+        {
+            var a = new Request();
+            var b = new Request();
+            Assert.IsTrue(a.GetHashCode() == b.GetHashCode());
+        }
+
+        [TestMethod()]
+        public void GetHashCodeTest2()
+        {
+            var a = new Request("test");
+            a.Headers.Add("1", 1);
+            var b = new Request("test");
+            b.Headers.Add("1", 1);
+            Assert.IsTrue(a.GetHashCode() == b.GetHashCode());
+        }
+
+        [TestMethod()]
+        public void GetHashCodeTest3()
+        {
+            var a = new Request("test");
+            var b = new Request("test");
+            b.Properties.Add("1", 1);
+            Assert.IsTrue(a.GetHashCode() == b.GetHashCode());
+        }
+
+        #endregion
 
         [TestMethod()]
         public void JsonStringTest()

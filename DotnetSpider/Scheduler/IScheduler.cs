@@ -13,6 +13,11 @@ namespace DotnetSpider.Scheduler
     public interface IScheduler : IDisposable, IRecordable
     {
         /// <summary>
+        /// 剩余的请求数量。
+        /// </summary>
+        long Count { get; }
+
+        /// <summary>
         /// 遍历方式，仅能在任务运行前修改。
         /// </summary>
         TraverseStrategy TraverseStrategy { get; set; }

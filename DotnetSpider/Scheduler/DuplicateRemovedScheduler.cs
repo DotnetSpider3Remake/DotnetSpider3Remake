@@ -22,7 +22,18 @@ namespace DotnetSpider.Scheduler
         public TraverseStrategy TraverseStrategy { get; set; } = TraverseStrategy.DoNotCare;
         public ILog Logger { get; set; }
 
-        public void Clear()
+        public long Count
+        {
+            get
+            {
+                lock (_requestLocker)
+                {
+                    return _requestList.Count;
+                }
+            }
+        }
+
+        public void Clear() 
         {
             lock (_requestLocker)
             {
@@ -47,7 +58,7 @@ namespace DotnetSpider.Scheduler
                         if (_requestList.Count > 0)
                         {
                             Request res;
-                            if (TraverseStrategy == TraverseStrategy.Bfs)
+                            if (TraverseStrategy == TraverseStrategy.BFS)
                             {
                                 res = _requestList.First.Value;
                                 _requestList.RemoveFirst();
