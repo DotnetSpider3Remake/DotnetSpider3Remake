@@ -9,6 +9,8 @@ namespace DotnetSpider.Downloader.Tests
     [TestClass()]
     public class RequestTests
     {
+        #region 构造函数
+
         [TestMethod()]
         public void RequestTest0()
         {
@@ -36,6 +38,10 @@ namespace DotnetSpider.Downloader.Tests
             Dictionary<string, object> properties = new Dictionary<string, object>();
             Assert.AreSame(properties, new Request("test", properties).Properties);
         }
+
+        #endregion
+
+        #region Equals/==/!=
 
         [TestMethod()]
         public void EqualsTest0()
@@ -78,6 +84,22 @@ namespace DotnetSpider.Downloader.Tests
             Assert.IsFalse(a == b);
             Assert.IsTrue(a != b);
         }
+
+        [TestMethod()]
+        public void EqualsTest4()
+        {
+            var a = new Request();
+            Assert.IsFalse(a.Equals(null));
+        }
+
+        [TestMethod()]
+        public void EqualsTest5()
+        {
+            var a = new Request();
+            Assert.IsFalse(a.Equals(15));
+        }
+
+        #endregion
 
         [TestMethod()]
         public void GetHashCodeTest()
