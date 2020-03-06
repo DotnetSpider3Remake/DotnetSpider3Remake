@@ -12,7 +12,7 @@ namespace DotnetSpider.Scheduler.Tests
     public class DuplicateRemovedSchedulerTests
     {
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void ClearTest()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -26,7 +26,7 @@ namespace DotnetSpider.Scheduler.Tests
         #region Poll
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void PollTest0()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -36,7 +36,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void PollTest1()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -51,7 +51,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public async Task PollTest2()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -61,7 +61,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public async Task PollAsyncTest0()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -71,7 +71,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public async Task PollAsyncTest1()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -86,7 +86,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public async Task PollAsyncTest2()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -100,7 +100,7 @@ namespace DotnetSpider.Scheduler.Tests
         #region Push
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void PushTest0()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -109,7 +109,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void PushTest1()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -119,7 +119,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void PushTest2()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -129,7 +129,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void PushTest3()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -139,7 +139,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void PushTest4()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -149,7 +149,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public async Task PushAsyncTest0()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -158,7 +158,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void PushAsyncTest1()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -168,7 +168,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void PushAsyncTest2()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -178,7 +178,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public async Task PushAsyncTest3()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -188,7 +188,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public async Task PushAsyncTest4()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -202,7 +202,7 @@ namespace DotnetSpider.Scheduler.Tests
         #region PollAsync and PushAsync
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public async Task PollAsyncAndPushAsync0()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -213,7 +213,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public async Task PollAsyncAndPushAsync1()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -225,7 +225,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void PollAsyncAndPushAsync2()
         {
             using var s = new DuplicateRemovedScheduler();
@@ -244,7 +244,7 @@ namespace DotnetSpider.Scheduler.Tests
         #region TraverseStrategy
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void TraverseStrategyTest0()
         {
             using var s = new DuplicateRemovedScheduler()
@@ -263,7 +263,7 @@ namespace DotnetSpider.Scheduler.Tests
         }
 
         [TestMethod()]
-        [Timeout(500)]
+        [Timeout(5000)]
         public void TraverseStrategyTest1()
         {
             using var s = new DuplicateRemovedScheduler()
