@@ -11,11 +11,11 @@ namespace DotnetSpider.Pipeline
 {
     /// <summary>
     /// 带缓存的数据管道基类。
-    /// 需要实现Name属性和ProcessCache函数。
+    /// 需要实现Name属性和Process函数。
     /// </summary>
     public abstract class BaseCachePipeline : BaseZeroDisposable, IPipeline
     {
-        private List<Tuple<List<IReadOnlyDictionary<string, object>>, dynamic>> _caches = new List<Tuple<List<IReadOnlyDictionary<string, object>>, dynamic>>();
+        private List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>> _caches = new List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>>();
         private readonly object _cachesLocker = new object();
         private bool _hasInitCachePipeline = false;
         private readonly object _hasInitCachePipelineLocker = new object();
@@ -28,57 +28,63 @@ namespace DotnetSpider.Pipeline
 
         public async Task Process(IReadOnlyDictionary<string, object> resultItems, dynamic sender = null)
         {
-            InitCachePipeline();
-            await Task.Run(() =>
+            if (EnableCache)
             {
-                lock (_cachesLocker)
+                InitCachePipeline();
+                await Task.Run(() =>
                 {
-                    if (_caches.Count == 0 || _caches.Last().Item2 != sender)
+                    lock (_cachesLocker)
                     {
-                        _caches.Add(Tuple.Create(
-                            new List<IReadOnlyDictionary<string, object>>() { resultItems }, 
-                            sender));
+                        if (_caches.Count == 0 || _caches.Last().Item2 != sender)
+                        {
+                            _caches.Add(Tuple.Create(
+                                new List<IReadOnlyDictionary<string, object>>() { resultItems },
+                                sender));
+                        }
+                        else
+                        {
+                            ((List<IReadOnlyDictionary<string, object>>)(_caches.Last().Item1)).Add(resultItems);
+                        }
                     }
-                    else 
+                });
+            }
+            else
+            {
+                await Process(new Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>[]
                     {
-                        _caches.Last().Item1.Add(resultItems);
-                    }
-                }
-            });
+                        Tuple.Create(new IReadOnlyDictionary<string, object>[] { resultItems }, sender)
+                    });
+            }
         }
 
         public async Task Process(IEnumerable<IReadOnlyDictionary<string, object>> resultItems, dynamic sender = null)
         {
-            InitCachePipeline();
-            await Task.Run(() =>
+            if (EnableCache)
             {
-                lock (_cachesLocker)
+                InitCachePipeline();
+                await Task.Run(() =>
                 {
-                    if (_caches.Count == 0 || _caches.Last().Item2 != sender)
+                    lock (_cachesLocker)
                     {
-                        _caches.Add(Tuple.Create(
-                            new List<IReadOnlyDictionary<string, object>>(resultItems),
-                            sender));
+                        if (_caches.Count == 0 || _caches.Last().Item2 != sender)
+                        {
+                            _caches.Add(Tuple.Create(
+                                new List<IReadOnlyDictionary<string, object>>(resultItems),
+                                sender));
+                        }
+                        else
+                        {
+                            ((List<IReadOnlyDictionary<string, object>>)(_caches.Last().Item1)).AddRange(resultItems);
+                        }
                     }
-                    else
-                    {
-                        _caches.Last().Item1.AddRange(resultItems);
-                    }
-                }
-            });
-        }
-
-        /// <summary>
-        /// 获取缓存的内容，此操作将清空缓存。
-        /// </summary>
-        /// <returns>缓存</returns>
-        protected List<Tuple<List<IReadOnlyDictionary<string, object>>, dynamic>> TakeCaches()
-        {
-            lock (_cachesLocker)
+                });
+            }
+            else
             {
-                var res = _caches;
-                _caches = new List<Tuple<List<IReadOnlyDictionary<string, object>>, dynamic>>();
-                return res;
+                await Process(new Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>[]
+                    {
+                        Tuple.Create(resultItems, sender)
+                    });
             }
         }
 
@@ -87,7 +93,7 @@ namespace DotnetSpider.Pipeline
         /// </summary>
         /// <param name="caches">缓存，用一个二元对象的数组表示。二元对象的第一个成员表示resultItems，第二个成员表示sender。</param>
         /// <returns></returns>
-        protected abstract Task ProcessCache(List<Tuple<List<IReadOnlyDictionary<string, object>>, dynamic>> caches);
+        protected abstract Task Process(IEnumerable<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>> caches);
 
         private void InitCachePipeline()
         {
@@ -118,31 +124,31 @@ namespace DotnetSpider.Pipeline
             Enter();
             while (IsDisposed == false)
             {
-                Task.WaitAll(ProcessCache(), WaitForNextProcess());
+                Task.WaitAll(Process(), WaitForNextProcess());
             }
 
-            ProcessCache().Wait();//在执行Dispose时，最后一次调用ProcessCache，清空缓存。
+            Process().Wait();//在执行Dispose时，最后一次调用Process，清空缓存。
             Leave();
         }
 
-        private async Task ProcessCache()
+        private async Task Process()
         {
-            List<Tuple<List<IReadOnlyDictionary<string, object>>, dynamic>> caches = null;
+            List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>> caches = null;
             lock (_cachesLocker)
             {
                 caches = _caches;
-                _caches = new List<Tuple<List<IReadOnlyDictionary<string, object>>, dynamic>>();
+                _caches = new List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>>();
             }
 
             if (caches.Count > 0)
             {
                 try
                 {
-                    await ProcessCache(caches);
+                    await Process(caches);
                 }
                 catch (Exception e)
                 {
-                    Logger?.Error($"{ Name } has an exception when exec ProcessCache.", e);
+                    Logger?.Error($"{ Name } has an exception when exec Process.", e);
                 }
             }
         }
