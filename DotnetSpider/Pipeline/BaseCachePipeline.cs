@@ -116,10 +116,12 @@ namespace DotnetSpider.Pipeline
         private void RunCachePipeline()
         {
             Enter();
-            do
+            while (IsDisposed == false)
             {
                 Task.WaitAll(ProcessCache(), WaitForNextProcess());
-            } while (IsDisposed == false);
+            }
+
+            ProcessCache().Wait();//在执行Dispose时，最后一次调用ProcessCache，清空缓存。
             Leave();
         }
 
@@ -150,7 +152,7 @@ namespace DotnetSpider.Pipeline
             DateTime begin = DateTime.Now;
             while (DateTime.Now - begin >= MaxCacheTime && IsDisposed == false)
             {
-                await Task.Delay(1);
+                await Task.Delay(1);//每隔1ms检测一次是否执行过Dispose。
             }
         }
     }
