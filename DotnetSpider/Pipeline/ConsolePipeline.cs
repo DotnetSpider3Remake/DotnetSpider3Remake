@@ -12,6 +12,8 @@ namespace DotnetSpider.Pipeline
         public bool EnableCache { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public TimeSpan MaxCacheTime { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
+        public string Name { get; set; } = "Console";
+
         public void Dispose()
         {
             
@@ -31,7 +33,7 @@ namespace DotnetSpider.Pipeline
                 ++count;
             }
 
-            Logger?.Info($"Out put to Console : { count } lines.");
+            Logger?.Info($"Out put to { Name } : { count } lines.");
             return Task.CompletedTask;
         }
 
@@ -57,7 +59,7 @@ namespace DotnetSpider.Pipeline
                 }
             }
 
-            Logger?.Info($"Out put to Console : { count } lines.");
+            Logger?.Info($"Out put to { Name } : { count } lines.");
             return Task.CompletedTask;
         }
     }

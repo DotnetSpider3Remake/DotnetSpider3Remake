@@ -21,6 +21,7 @@ namespace DotnetSpider.Scheduler
 
         public TraverseStrategy TraverseStrategy { get; set; } = TraverseStrategy.DoNotCare;
         public ILog Logger { get; set; }
+        public string Name { get; set; } = "DuplicateRemovedScheduler";
 
         public long Count
         {
