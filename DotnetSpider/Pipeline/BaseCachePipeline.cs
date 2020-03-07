@@ -35,8 +35,8 @@ namespace DotnetSpider.Pipeline
                 {
                     if (_caches.Count == 0 || _caches.Last().Item2 != sender)
                     {
-                        _caches.Add(new Tuple<List<IReadOnlyDictionary<string, object>>, dynamic>
-                            (new List<IReadOnlyDictionary<string, object>>() { resultItems }, 
+                        _caches.Add(Tuple.Create(
+                            new List<IReadOnlyDictionary<string, object>>() { resultItems }, 
                             sender));
                     }
                     else 
@@ -56,8 +56,8 @@ namespace DotnetSpider.Pipeline
                 {
                     if (_caches.Count == 0 || _caches.Last().Item2 != sender)
                     {
-                        _caches.Add(new Tuple<List<IReadOnlyDictionary<string, object>>, dynamic>
-                            (new List<IReadOnlyDictionary<string, object>>(resultItems),
+                        _caches.Add(Tuple.Create(
+                            new List<IReadOnlyDictionary<string, object>>(resultItems),
                             sender));
                     }
                     else
