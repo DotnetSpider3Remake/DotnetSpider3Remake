@@ -33,6 +33,6 @@ namespace DotnetSpider
         /// <summary>
         /// 页面解析器列表
         /// </summary>
-        IEnumerable<IPageProcessor> PageProcessors { get; }
+        IEnumerable<IResponseProcessor> PageProcessors { get; }
     }
 }

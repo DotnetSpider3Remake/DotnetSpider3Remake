@@ -58,7 +58,7 @@ namespace DotnetSpider.Downloader
         /// <summary>
         /// 存储此链接对应的额外数据字典
         /// </summary>
-        public Dictionary<string, object> Properties { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> Properties { get; } = new Dictionary<string, object>();
 
         /// <summary>
         /// 请求此链接时需要POST的数据
@@ -114,52 +114,35 @@ namespace DotnetSpider.Downloader
         /// <returns>是否相等</returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || GetType() != obj.GetType())
+            if (obj is null || GetType() != obj.GetType())
             {
                 return false;
             }
 
-            return this == (Request)obj;
-        }
-
-        /// <summary>
-        /// 比较两个实例是否相等。
-        /// 不比较Properties属性。
-        /// </summary>
-        /// <returns>是否相等</returns>
-        public static bool operator == (Request a, Request b)
-        {
-            if (ReferenceEquals(a, b))
+            if (ReferenceEquals(this, obj))
             {
                 return true;
             }
 
-            if (a.Url != b.Url ||
-                a.Method != b.Method ||
-                a.Accept != b.Accept ||
-                a.CompressMode != b.CompressMode ||
-                a.Content != b.Content ||
-                a.ContentType != b.ContentType ||
-                a.EncodingName != b.EncodingName ||
+            Request a = this;
+            Request b = (Request)obj;
+
+            if (Equals(a.Url, b.Url) == false ||
+                Equals(a.Method, b.Method) == false ||
+                Equals(a.Accept, b.Accept) == false ||
+                Equals(a.CompressMode, b.CompressMode) == false ||
+                Equals(a.Content, b.Content) == false ||
+                Equals(a.ContentType, b.ContentType) == false ||
+                Equals(a.EncodingName, b.EncodingName) == false ||
                 Comparaor.AreEquivalent(a.Headers, b.Headers) == false ||
-                a.Origin != b.Origin ||
-                a.Referer != b.Referer ||
-                a.UserAgent != b.UserAgent)
+                Equals(a.Origin, b.Origin) == false ||
+                Equals(a.Referer, b.Referer) == false ||
+                Equals(a.UserAgent, b.UserAgent) == false)
             {
                 return false;
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// 比较两个实例是否不相等。
-        /// 不比较Properties属性。
-        /// </summary>
-        /// <returns>是否不相等</returns>
-        public static bool operator !=(Request a, Request b)
-        {
-            return !(a == b);
         }
 
         /// <summary>

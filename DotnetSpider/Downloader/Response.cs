@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Newtonsoft.Json;
+using System.Net;
 
 namespace DotnetSpider.Downloader
 {
@@ -42,5 +43,22 @@ namespace DotnetSpider.Downloader
         public dynamic Delivery { get; set; }
 
         public HttpStatusCode StatusCode { get; set; }
+
+
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+
+        /// <summary>
+        /// 从JSON字符串构建Response。
+        /// </summary>
+        /// <param name="s">JSON字符串</param>
+        /// <returns>Response实例</returns>
+        public static Response FromString(string s)
+        {
+            return JsonConvert.DeserializeObject<Response>(s);
+        }
     }
 }

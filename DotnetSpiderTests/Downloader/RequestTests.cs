@@ -41,7 +41,7 @@ namespace DotnetSpider.Downloader.Tests
 
         #endregion
 
-        #region Equals/==/!=
+        #region Equals
 
         [TestMethod()]
         public void EqualsTest0()
@@ -49,8 +49,6 @@ namespace DotnetSpider.Downloader.Tests
             var a = new Request();
             var b = new Request();
             Assert.IsTrue(a.Equals(b));
-            Assert.IsTrue(a == b);
-            Assert.IsFalse(a != b);
         }
 
         [TestMethod()]
@@ -59,8 +57,6 @@ namespace DotnetSpider.Downloader.Tests
             var a = new Request();
             var b = new Request("test");
             Assert.IsFalse(a.Equals(b));
-            Assert.IsFalse(a == b);
-            Assert.IsTrue(a != b);
         }
 
         [TestMethod()]
@@ -70,8 +66,6 @@ namespace DotnetSpider.Downloader.Tests
             var b = new Request();
             b.Properties.Add("test", null);
             Assert.IsTrue(a.Equals(b));
-            Assert.IsTrue(a == b);
-            Assert.IsFalse(a != b);
         }
 
         [TestMethod()]
@@ -81,8 +75,6 @@ namespace DotnetSpider.Downloader.Tests
             var b = new Request();
             b.Headers.Add("test", null);
             Assert.IsFalse(a.Equals(b));
-            Assert.IsFalse(a == b);
-            Assert.IsTrue(a != b);
         }
 
         [TestMethod()]

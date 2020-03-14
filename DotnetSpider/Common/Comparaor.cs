@@ -20,12 +20,12 @@ namespace DotnetSpider.Common
         /// <returns>是否等效</returns>
         public static bool AreEquivalent<TKey, TValue>(IDictionary<TKey, TValue> a, IDictionary<TKey, TValue> b)
         {
-            if (a == null && b == null)
+            if (a is null && b is null)
             {
                 return true;
             }
 
-            if (a == null || b == null)
+            if (a is null || b is null)
             {
                 return false;
             }

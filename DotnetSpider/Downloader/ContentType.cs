@@ -1,9 +1,9 @@
 ﻿namespace DotnetSpider.Downloader
 {
-	public enum ContentType
-	{
-		Auto,
-		Html,
-		Json
-	}
+    public enum ContentType
+    {
+        Auto,
+        Html,
+        Json
+    }
 }
