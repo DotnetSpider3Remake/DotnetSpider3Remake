@@ -42,7 +42,7 @@ namespace DotnetSpider.Scheduler.Tests
             using var s = new DuplicateRemovedScheduler();
             Task.Run(async () =>
             {
-                await Task.Delay(50);
+                await Task.Delay(100);
                 s.Dispose();
             });
             DateTime begin = DateTime.Now;
@@ -76,7 +76,7 @@ namespace DotnetSpider.Scheduler.Tests
         {
             using var s = new DuplicateRemovedScheduler();
             DateTime begin = DateTime.Now;
-            Task delay = Task.Delay(50);
+            Task delay = Task.Delay(100);
             var poll = s.PollAsync();
             await delay;
             s.Dispose();
