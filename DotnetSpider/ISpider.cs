@@ -6,6 +6,7 @@ using DotnetSpider.Downloader;
 using System;
 using System.Collections.Generic;
 using DotnetSpider.Runner;
+using DotnetSpider.Proxy;
 
 namespace DotnetSpider
 {
@@ -34,5 +35,10 @@ namespace DotnetSpider
         /// 页面解析器列表
         /// </summary>
         IEnumerable<IResponseProcessor> PageProcessors { get; }
+
+        /// <summary>
+        /// 代理获取器
+        /// </summary>
+        IHttpProxy HttpProxy { get; }
     }
 }
