@@ -12,9 +12,10 @@ namespace DotnetSpider.Processor
     public interface IResponseProcessor : IDisposable, IRecordable
     {
         /// <summary>
-        /// 解析数据结果, 解析目标链接
+        /// 解析页面
         /// </summary>
         /// <param name="page">页面数据</param>
-        Task Process(Response page);
+        /// <returns>解析的结果</returns>
+        Task<ProcessorResult> Process(Response page);
     }
 }
