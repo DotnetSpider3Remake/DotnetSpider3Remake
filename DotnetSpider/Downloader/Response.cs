@@ -42,9 +42,16 @@ namespace DotnetSpider.Downloader
         /// </summary>
         public dynamic Delivery { get; set; }
 
+        /// <summary>
+        /// HTTP返回代码
+        /// </summary>
         public HttpStatusCode StatusCode { get; set; }
 
-
+        /// <summary>
+        /// 使用下载器时，是否发生超时现象。
+        /// 当<see cref="IsDownloaderTimeout"/>为true时，其他属性（<see cref="Request"/>除外）均为默认值。
+        /// </summary>
+        public bool IsDownloaderTimeout { get; set; }
 
         public override string ToString()
         {

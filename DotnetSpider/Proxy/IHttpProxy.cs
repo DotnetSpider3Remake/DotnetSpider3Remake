@@ -25,7 +25,7 @@ namespace DotnetSpider.Proxy
         /// 每一个请求结束后，ISpider会调用这个方法。
         /// </summary>
         /// <param name="proxy">代理</param>
-        /// <param name="statusCode">通过此代理请求数据后的返回状态</param>
-        Task ReturnProxy(WebProxy proxy, HttpStatusCode statusCode);
+        /// <param name="response">该请求的返回信息，一般需要注意<see cref="Response.StatusCode"/>和<see cref="Response.IsDownloaderTimeout"/></param>
+        Task ReturnProxy(WebProxy proxy, Response response);
     }
 }
