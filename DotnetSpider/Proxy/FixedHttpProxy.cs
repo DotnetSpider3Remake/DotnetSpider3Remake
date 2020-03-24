@@ -33,7 +33,7 @@ namespace DotnetSpider.Proxy
             return Task.FromResult(_proxy);
         }
 
-        public virtual Task ReturnProxy(WebProxy proxy, HttpStatusCode statusCode)
+        public virtual Task ReturnProxy(WebProxy proxy, Response response)
         {
             return Task.CompletedTask;
         }
