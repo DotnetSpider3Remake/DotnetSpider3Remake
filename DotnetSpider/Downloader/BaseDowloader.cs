@@ -19,17 +19,17 @@ namespace DotnetSpider.Downloader
         public async Task<Response> Download(Request request, WebProxy proxy = null)
         {
             Enter();
-            var res = await Downloading(request, proxy);
+            var res = await DownloadSync(request, proxy);
             Leave();
             return res;
         }
 
         /// <summary>
-        /// 下载链接内容。
+        /// 同步下载链接内容。
         /// </summary>
         /// <param name="request">链接请求</param>
-        /// <param name="proxy">代理 <see cref="IHttpProxy"/></param>
+        /// <param name="proxy">代理 <see cref="DotnetSpider.Proxy.IHttpProxy"/></param>
         /// <returns>链接请求结果</returns>
-        protected abstract Task<Response> Downloading(Request request, WebProxy proxy = null);
+        protected abstract Task<Response> DownloadSync(Request request, WebProxy proxy = null);
     }
 }

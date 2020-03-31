@@ -29,6 +29,11 @@ namespace DotnetSpider.Processor
             });
         }
 
+        /// <summary>
+        /// 同步执行页面解析。
+        /// </summary>
+        /// <param name="page">页面数据</param>
+        /// <returns>解析的结果</returns>
         protected abstract ProcessorResult ProcessSync(Response page);
     }
 }

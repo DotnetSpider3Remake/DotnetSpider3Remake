@@ -61,12 +61,12 @@ namespace DotnetSpider.Downloader
         public Dictionary<string, object> Properties { get; } = new Dictionary<string, object>();
 
         /// <summary>
-        /// 请求此链接时需要POST的数据
+        /// 请求此链接时需要POST/PUT的数据
         /// </summary>
         public string Content { get; set; }
 
         /// <summary>
-        /// 如果是 POST 请求, 可以设置压缩模式上传数据
+        /// 如果是 POST/PUT 请求, 可以设置压缩模式上传数据
         /// </summary>
         public CompressMode CompressMode { get; set; }
 
