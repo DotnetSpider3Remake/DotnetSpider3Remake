@@ -14,6 +14,7 @@ namespace DotnetSpider.Downloader
     {
         /// <summary>
         /// 下载链接内容，实现应该线程安全、可重入。
+        /// （无需关心公共属性的线程安全，那应该由使用者维护）
         /// </summary>
         /// <param name="request">链接请求</param>
         /// <param name="proxy">代理 <see cref="IHttpProxy"/></param>
