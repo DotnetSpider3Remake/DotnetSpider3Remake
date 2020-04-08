@@ -108,7 +108,7 @@ namespace DotnetSpider.Downloader
         /// <summary>
         /// Cookies
         /// </summary>
-        public List<Cookie> Cookies { get; set; }
+        public Dictionary<string, string> Cookies { get; set; }
 
         /// <summary>
         /// 构造方法

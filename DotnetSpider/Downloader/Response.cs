@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Net;
 
 namespace DotnetSpider.Downloader
@@ -35,7 +36,7 @@ namespace DotnetSpider.Downloader
         /// <summary>
         /// 请求结果的类型
         /// </summary>
-        public ContentType ContentType { get; set; }
+        public string ContentType { get; set; }
 
         /// <summary>
         /// HTTP返回代码
@@ -47,6 +48,15 @@ namespace DotnetSpider.Downloader
         /// 当<see cref="IsDownloaderTimeout"/>为true时，其他属性（<see cref="Request"/>除外）均为默认值。
         /// </summary>
         public bool IsDownloaderTimeout { get; set; }
+
+        /// <summary>
+        /// 请求是否成功执行
+        /// </summary>
+        public bool IsSuccessStatusCode => StatusCode < HttpStatusCode.BadRequest && StatusCode >= HttpStatusCode.OK;
+
+        public List<Dictionary<string, string>> SetCookies { get; set; }
+
+        public Dictionary<string, HashSet<string>> Headers { get; set; }
 
         public override string ToString()
         {

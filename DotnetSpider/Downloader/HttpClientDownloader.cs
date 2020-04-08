@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace DotnetSpider.Downloader
         /// <see cref="HttpClient"/>实例集合。
         /// 在调用<see cref="IDisposable.Dispose"/>时，会自动释放所有<see cref="HttpClient"/>。
         /// </summary>
-        protected readonly Dictionary<int, Tuple<HttpClient, DynamicProxy, CookieContainer>> _httpClients = new Dictionary<int, Tuple<HttpClient, DynamicProxy, CookieContainer>>();
+        protected readonly Dictionary<int, Tuple<HttpClient, DynamicProxy>> _httpClients = new Dictionary<int, Tuple<HttpClient, DynamicProxy>>();
         /// <summary>
         /// <see cref="_httpClients"/>的读写锁。
         /// </summary>
@@ -30,7 +31,7 @@ namespace DotnetSpider.Downloader
         /// <summary xml:lang="zh-CN">
         /// 定义哪些类型的内容不需要当成文件下载，即文本格式。
         /// </summary>
-        public readonly List<string> ExcludeMediaTypes = new List<string>
+        public readonly HashSet<string> ExcludeMediaTypes = new HashSet<string>
         {
             "",
             "text/html",
@@ -51,40 +52,60 @@ namespace DotnetSpider.Downloader
         /// <summary>
         /// 构造HttpClient函数，一般每个线程中只调用一次。
         /// </summary>
-        public Func<HttpMessageHandler, HttpClient> HttpClientGetter { get; set; }
-
-        /// <summary>
-        /// 是否使用Cookies。如果为false，<see cref="Request.Cookies"/>将被忽略。
-        /// 默认为false。
-        /// </summary>
-        public bool UseCookies { get; set; } = false;
+        public Func<HttpMessageHandler, HttpClient> HttpClientGetter { get; set; } = handler => new HttpClient(handler);
 
         protected override async Task<Response> Downloading(Request request, IWebProxy proxy = null)
         {
-            Response response = new Response(request);
-            var httpClient = GetHttpClient(request, proxy);
-            using (var message = GenerateHttpRequestMessage(request))
+            Response response = new Response(request)
             {
-                var cts = new CancellationTokenSource();
-                cts.CancelAfter(Timeout);
-                try
+                StatusCode = HttpStatusCode.ServiceUnavailable,
+                IsDownloaderTimeout = false
+            };
+            try
+            {
+                var httpClient = GetHttpClient(request, proxy);
+                using (var message = GenerateHttpRequestMessage(request))
                 {
-                    using (var httpResponse = await httpClient.SendAsync(message, cts.Token))
+                    var cts = new CancellationTokenSource();
+                    cts.CancelAfter(Timeout);
+                    try
                     {
+                        using (var httpResponse = await httpClient.SendAsync(message, cts.Token))
+                        {
+                            response.StatusCode = httpResponse.StatusCode;
+                            response.Headers = GetResponseHeaders(httpResponse.Headers);
+                            response.SetCookies = GetSetCookies(response.Headers);
+                            response.TargetUrl = httpResponse.RequestMessage.RequestUri.AbsoluteUri;
+                            if (httpResponse.Content != null)
+                            {
+                                AppendContentHeaders(response.Headers, httpResponse.Content.Headers);
+                                response.ContentType = httpResponse.Content.Headers?.ContentType?.ToString() ?? string.Empty;
+                                if (ExcludeMediaTypes.Contains(response.ContentType))
+                                {
+                                    response.Content = await httpResponse.Content.ReadAsStringAsync();
+                                }
+                                else
+                                {
+                                    response.Content = await httpResponse.Content.ReadAsByteArrayAsync();
+                                }
+                            }
+                        }
+                    }
+                    catch (TaskCanceledException e)
+                    {
+                        if (e.CancellationToken == cts.Token)
+                        {
+                            response.StatusCode = HttpStatusCode.RequestTimeout;
+                            response.IsDownloaderTimeout = true;
+                        }
 
+                        throw;
                     }
                 }
-                catch (TaskCanceledException e)
-                {
-                    if (e.CancellationToken == cts.Token)
-                    {
-                        response.IsDownloaderTimeout = true;
-                    }
-                    else
-                    {
-                        
-                    }
-                }
+            }
+            catch (Exception e)
+            {
+                Logger?.Error($"HTTP请求时发生异常，请求内容： { request }", e);
             }
 
             return response;
@@ -115,57 +136,33 @@ namespace DotnetSpider.Downloader
         protected virtual HttpClient GetHttpClient(Request request, IWebProxy proxy)
         {
             int threadNum = Thread.CurrentThread.ManagedThreadId;
-            Tuple<HttpClient, DynamicProxy, CookieContainer> cur;
             lock (_httpClientsLocker)
             {
                 if (_httpClients.ContainsKey(threadNum) == false)
                 {
                     var handlerTuple = CreateHttpMessageHandler();
-                    var httpClient = HttpClientGetter?.Invoke(handlerTuple.Item1) ?? CreateHttpClient(handlerTuple.Item1);
+                    var httpClient = HttpClientGetter(handlerTuple.Item1);
                     _httpClients.Add(threadNum,
-                        new Tuple<HttpClient, DynamicProxy, CookieContainer>(httpClient, handlerTuple.Item2, handlerTuple.Item3));
+                        new Tuple<HttpClient, DynamicProxy>(httpClient, handlerTuple.Item2));
                 }
 
-                cur = _httpClients[threadNum];
+                var cur = _httpClients[threadNum];
+                cur.Item2.InnerProxy = proxy;
+                return cur.Item1;
             }
-
-            cur.Item2.InnerProxy = proxy;
-            if (UseCookies)
-            {
-                var cookies = cur.Item3.GetCookies(new Uri(request.Url));
-                foreach (Cookie i in cookies)
-                {
-                    i.Expired = true;
-                }
-
-                if (request.Cookies != null)
-                {
-                    foreach (var i in request.Cookies)
-                    {
-                        cookies.Add(i);
-                    }
-                }
-            }
-
-            return cur.Item1;
         }
 
-        protected virtual HttpClient CreateHttpClient(HttpMessageHandler handler)
-        {
-            return new HttpClient(handler);
-        }
-
-        protected virtual Tuple<HttpMessageHandler, DynamicProxy, CookieContainer> CreateHttpMessageHandler()
+        protected virtual Tuple<HttpMessageHandler, DynamicProxy> CreateHttpMessageHandler()
         {
             DynamicProxy proxy = new DynamicProxy();
             HttpClientHandler handler = new HttpClientHandler
             {
-                UseCookies = UseCookies,
+                UseCookies = false,
                 UseDefaultCredentials = false,
                 UseProxy = true,
                 Proxy = proxy
             };
-            return new Tuple<HttpMessageHandler, DynamicProxy, CookieContainer>(handler, proxy, handler.CookieContainer);
+            return new Tuple<HttpMessageHandler, DynamicProxy>(handler, proxy);
         }
 
         private HttpRequestMessage GenerateHttpRequestMessage(Request request)
@@ -204,6 +201,23 @@ namespace DotnetSpider.Downloader
                 var header = "Accept";
                 httpRequestMessage.Headers.Remove(header);
                 httpRequestMessage.Headers.TryAddWithoutValidation(header, request.Accept);
+            }
+
+            if (request.Cookies != null && request.Cookies.Count > 0)
+            {
+                StringBuilder builder = new StringBuilder();
+                foreach (var i in request.Cookies)
+                {
+                    builder.Append(i.Key);
+                    builder.Append(":");
+                    builder.Append(i.Value);
+                    builder.Append("; ");
+                }
+
+                builder.Remove(builder.Length - 2, 2);
+                var header = "Cookie";
+                httpRequestMessage.Headers.Remove(header);
+                httpRequestMessage.Headers.TryAddWithoutValidation(header, builder.ToString());
             }
 
             //添加CONTENT，可以为空字符串。
@@ -269,6 +283,77 @@ namespace DotnetSpider.Downloader
             }
 
             return bytes;
+        }
+
+        private Dictionary<string, HashSet<string>> GetResponseHeaders(HttpResponseHeaders headers)
+        {
+            Dictionary<string, HashSet<string>> res = new Dictionary<string, HashSet<string>>();
+            if (headers != null)
+            {
+                foreach (var header in headers)
+                {
+                    if (res.ContainsKey(header.Key))
+                    {
+                        res[header.Key].UnionWith(header.Value);
+                    }
+                    else 
+                    {
+                        res.Add(header.Key, new HashSet<string>(header.Value));
+                    }
+                }
+            }
+
+            return res;
+        }
+
+        private void AppendContentHeaders(Dictionary<string, HashSet<string>> headers, HttpContentHeaders contentHeaders)
+        {
+            if (contentHeaders == null)
+            {
+                return;
+            }
+
+            foreach (var header in contentHeaders)
+            {
+                if (headers.ContainsKey(header.Key))
+                {
+                    headers[header.Key].UnionWith(header.Value);
+                }
+                else
+                {
+                    headers.Add(header.Key, new HashSet<string>(header.Value));
+                }
+            }
+        }
+
+        private List<Dictionary<string, string>> GetSetCookies(Dictionary<string, HashSet<string>> header)
+        {
+            List<Dictionary<string, string>> cookies = new List<Dictionary<string, string>>();
+            if (header.ContainsKey("Set-Cookie"))
+            {
+                foreach (var i in header["Set-Cookie"])
+                {
+                    Dictionary<string, string> cookie = new Dictionary<string, string>();
+                    string[] lines = i.Split(';');
+                    foreach (var j in lines)
+                    {
+                        string[] words = j.Split(':');
+                        if (words.Length != 2)
+                        {
+                            continue;
+                        }
+
+                        cookie[words[0].Trim()] = words[1].Trim();
+                    }
+
+                    if (cookie.Count > 0)
+                    {
+                        cookies.Add(cookie);
+                    }
+                }
+            }
+
+            return cookies;
         }
     }
 }
