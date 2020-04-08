@@ -38,11 +38,6 @@ namespace DotnetSpider.Downloader
         public ContentType ContentType { get; set; }
 
         /// <summary>
-        /// 用于数据传递
-        /// </summary>
-        public dynamic Delivery { get; set; }
-
-        /// <summary>
         /// HTTP返回代码
         /// </summary>
         public HttpStatusCode StatusCode { get; set; }

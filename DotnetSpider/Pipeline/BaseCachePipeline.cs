@@ -121,14 +121,15 @@ namespace DotnetSpider.Pipeline
 
         private void RunCachePipeline()
         {
-            Enter();
-            while (IsDisposed == false)
+            using (var helper = GetAutoLeaveHelper())
             {
-                Task.WaitAll(Process(), WaitForNextProcess());
-            }
+                while (IsDisposed == false)
+                {
+                    Task.WaitAll(Process(), WaitForNextProcess());
+                }
 
-            Process().Wait();//在执行Dispose时，最后一次调用Process，清空缓存。
-            Leave();
+                Process().Wait();//在执行Dispose时，最后一次调用Process，清空缓存。
+            }
         }
 
         private async Task Process()

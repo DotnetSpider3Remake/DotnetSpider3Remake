@@ -15,20 +15,20 @@ namespace DotnetSpider.Processor
 
         public async Task<ProcessorResult> Process(Response page)
         {
-            return await Task.Run(() =>
+            using (var helper = GetAutoLeaveHelper())
             {
-                Enter();
-                try
+                return await Task.Run(() =>
                 {
                     return ProcessSync(page);
-                }
-                finally
-                {
-                    Leave();
-                }
-            });
+                });
+            }
         }
 
+        /// <summary>
+        /// 同步执行页面解析。
+        /// </summary>
+        /// <param name="page">页面数据</param>
+        /// <returns>解析的结果</returns>
         protected abstract ProcessorResult ProcessSync(Response page);
     }
 }

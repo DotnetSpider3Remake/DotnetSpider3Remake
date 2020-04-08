@@ -18,7 +18,7 @@ namespace DotnetSpider.Proxy
         /// </summary>
         /// <param name="request">使用该代理的请求，可以做一些修改</param>
         /// <returns>代理</returns>
-        Task<WebProxy> GetProxy(Request request);
+        Task<IWebProxy> GetProxy(Request request);
 
         /// <summary>
         /// 结束代理的使用。
@@ -26,6 +26,6 @@ namespace DotnetSpider.Proxy
         /// </summary>
         /// <param name="proxy">代理</param>
         /// <param name="response">该请求的返回信息，一般需要注意<see cref="Response.StatusCode"/>和<see cref="Response.IsDownloaderTimeout"/></param>
-        Task ReturnProxy(WebProxy proxy, Response response);
+        Task ReturnProxy(IWebProxy proxy, Response response);
     }
 }

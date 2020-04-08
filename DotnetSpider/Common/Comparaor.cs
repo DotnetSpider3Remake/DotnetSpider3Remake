@@ -51,5 +51,39 @@ namespace DotnetSpider.Common
 
             return true;
         }
+
+        public static bool AreEquivalent<T>(IList<T> a, IList<T> b)
+        {
+            if (a is null && b is null)
+            {
+                return true;
+            }
+
+            if (a is null || b is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(a, b))
+            {
+                return true;
+            }
+
+            if (a.Count != b.Count)
+            {
+                return false;
+            }
+
+            int count = a.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                if (Equals(a[i], b[i]) == false)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }

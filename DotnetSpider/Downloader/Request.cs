@@ -3,6 +3,9 @@ using System.Net.Http;
 using System.Linq;
 using Newtonsoft.Json;
 using DotnetSpider.Common;
+using System.Text;
+using System.Net;
+using System;
 
 namespace DotnetSpider.Downloader
 {
@@ -34,7 +37,7 @@ namespace DotnetSpider.Downloader
         public string Accept { get; set; }
 
         /// <summary>
-        /// 仅在发送 POST 请求时需要设置
+        /// 仅在发送 POST/PUT 请求时需要设置
         /// </summary>
         public string ContentType { get; set; }
 
@@ -46,7 +49,7 @@ namespace DotnetSpider.Downloader
         #endregion
 
         /// <summary>
-        /// 字符编码
+        /// 字符编码，默认为UTF-8
         /// </summary>
         public string EncodingName { get; set; }
 
@@ -61,12 +64,39 @@ namespace DotnetSpider.Downloader
         public Dictionary<string, object> Properties { get; } = new Dictionary<string, object>();
 
         /// <summary>
-        /// 请求此链接时需要POST的数据
+        /// 请求此链接时需要POST/PUT的数据，文本格式。
         /// </summary>
         public string Content { get; set; }
 
+        private byte[] _contentData = null;
         /// <summary>
-        /// 如果是 POST 请求, 可以设置压缩模式上传数据
+        /// 请求此链接时需要POST/PUT的数据，二进制格式。
+        /// 当Content不为null时，会使用Content代替。(根据EncodingName转换编码)
+        /// <seealso cref="Content"/>
+        /// <seealso cref="EncodingName"/>
+        /// </summary>
+        public byte[] ContentData
+        {
+            get
+            {
+                if (Content != null)
+                {
+                    var encoding = string.IsNullOrEmpty(EncodingName) ? Encoding.UTF8 : Encoding.GetEncoding(EncodingName);
+                    return encoding.GetBytes(Content);
+                }
+                else
+                {
+                    return _contentData;
+                }
+            }
+            set
+            {
+                _contentData = value;
+            }
+        }
+
+        /// <summary>
+        /// 如果是 POST/PUT 请求, 可以设置压缩模式上传数据。（仅当使用Content代替ContentData时）
         /// </summary>
         public CompressMode CompressMode { get; set; }
 
@@ -74,6 +104,11 @@ namespace DotnetSpider.Downloader
         /// 请求链接, 不使用 Uri 的原因是可能引起多重编码的问题
         /// </summary>
         public string Url { get; set; }
+
+        /// <summary>
+        /// Cookies
+        /// </summary>
+        public List<Cookie> Cookies { get; set; }
 
         /// <summary>
         /// 构造方法
@@ -133,8 +168,10 @@ namespace DotnetSpider.Downloader
                 Equals(a.CompressMode, b.CompressMode) == false ||
                 Equals(a.Content, b.Content) == false ||
                 Equals(a.ContentType, b.ContentType) == false ||
+                (a.Content == null && Equals(a.ContentData, b.ContentData) == false) ||
                 Equals(a.EncodingName, b.EncodingName) == false ||
                 Comparaor.AreEquivalent(a.Headers, b.Headers) == false ||
+                Comparaor.AreEquivalent(a.Cookies, b.Cookies) == false ||
                 Equals(a.Origin, b.Origin) == false ||
                 Equals(a.Referer, b.Referer) == false ||
                 Equals(a.UserAgent, b.UserAgent) == false)
@@ -157,7 +194,9 @@ namespace DotnetSpider.Downloader
                 c = HashCode.GetHashCode(c, Accept);
                 c = HashCode.GetHashCode(c, CompressMode);
                 c = HashCode.GetHashCode(c, Content);
+                c = HashCode.GetHashCode(c, ContentData);
                 c = HashCode.GetHashCode(c, ContentType);
+                c = HashCode.GetHashCode(c, Cookies);
                 c = HashCode.GetHashCode(c, EncodingName);
                 c = HashCode.GetHashCode(c, Headers);
                 c = HashCode.GetHashCode(c, Method);

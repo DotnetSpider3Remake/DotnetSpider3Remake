@@ -49,9 +49,8 @@ namespace DotnetSpider.Scheduler
 
         public async Task<Request> PollAsync()
         {
-            try
+            using (var helper = GetAutoLeaveHelper())
             {
-                Enter();
                 while (IsDisposed == false)
                 {
                     lock (_requestLocker)
@@ -79,17 +78,12 @@ namespace DotnetSpider.Scheduler
 
                 return null;
             }
-            finally
-            {
-                Leave();
-            }
         }
 
         public void Push(Request request)
         {
-            try
+            using (var helper = GetAutoLeaveHelper())
             {
-                Enter();
                 lock (_requestLocker)
                 {
                     if (_requestSet.Contains(request) == false)
@@ -99,17 +93,12 @@ namespace DotnetSpider.Scheduler
                     }
                 }
             }
-            finally
-            {
-                Leave();
-            }
         }
 
         public void Push(IEnumerable<Request> requests)
         {
-            try
+            using (var helper = GetAutoLeaveHelper())
             {
-                Enter();
                 lock (_requestLocker)
                 {
                     foreach (var i in requests)
@@ -121,10 +110,6 @@ namespace DotnetSpider.Scheduler
                         }
                     }
                 }
-            }
-            finally
-            {
-                Leave();
             }
         }
 

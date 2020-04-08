@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DotnetSpider.Runner.Helper;
+using System;
 using System.Threading;
 
 namespace DotnetSpider.Runner
@@ -107,6 +108,15 @@ namespace DotnetSpider.Runner
                     _waitZeroHandle.Set();
                 }
             }
+        }
+
+        protected BaseZeroDisposableHelper GetAutoLeaveHelper()
+        {
+            Enter();
+            return new BaseZeroDisposableHelper
+            {
+                Leave = Leave
+            };
         }
         #endregion
     }

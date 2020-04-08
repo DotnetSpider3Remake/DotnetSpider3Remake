@@ -13,12 +13,12 @@ namespace DotnetSpider.Proxy
     /// </summary>
     public class FixedHttpProxy : BaseZeroDisposable, IHttpProxy
     {
-        protected readonly WebProxy _proxy = null;
+        protected readonly IWebProxy _proxy = null;
 
         public ILog Logger { get; set; }
         public string Name { get; set; }
 
-        public FixedHttpProxy(WebProxy proxy)
+        public FixedHttpProxy(IWebProxy proxy)
         {
             _proxy = proxy;
         }
@@ -28,12 +28,12 @@ namespace DotnetSpider.Proxy
             
         }
 
-        public virtual Task<WebProxy> GetProxy(Request request)
+        public virtual Task<IWebProxy> GetProxy(Request request)
         {
             return Task.FromResult(_proxy);
         }
 
-        public virtual Task ReturnProxy(WebProxy proxy, Response response)
+        public virtual Task ReturnProxy(IWebProxy proxy, Response response)
         {
             return Task.CompletedTask;
         }
