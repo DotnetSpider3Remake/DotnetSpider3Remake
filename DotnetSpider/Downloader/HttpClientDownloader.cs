@@ -129,7 +129,7 @@ namespace DotnetSpider.Downloader
         /// 获取当前线程使用的<see cref="HttpClient"/>实例。
         /// 默认只为每个线程各生成一个<see cref="HttpClient"/>实例。
         /// 一般应在需要修改<see cref="HttpClient"/>实例生存周期时重载。
-        /// 如果只需要更改<see cref="HttpMessageHandler"/>、<see cref="HttpClient"/>的类型，请为<see cref="HttpMessageHandlerGetter"/>、<see cref="HttpClientGetter"/>赋值。
+        /// 如果只需要更改<see cref="HttpClient"/>的类型，请为<see cref="HttpClientGetter"/>赋值。
         /// </summary>
         /// <param name="request">即将调用的请求。</param>
         /// <returns><see cref="HttpClient"/>实例</returns>
