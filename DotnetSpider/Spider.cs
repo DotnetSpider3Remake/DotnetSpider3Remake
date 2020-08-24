@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DotnetSpider
@@ -242,7 +243,7 @@ namespace DotnetSpider
             InitSpider();
             if (CheckConfiguration())
             {
-                Parallel.For(0, Parallels, async _ => await RunSpiderThread());
+                Parallel.For(0, Parallels, RunSpiderThread);
             }
 
             Exit().Wait();
@@ -386,7 +387,7 @@ namespace DotnetSpider
         /// <summary>
         /// 运行爬虫线程
         /// </summary>
-        private async Task RunSpiderThread()
+        private void RunSpiderThread(int _)
         {
             while (IsRunning)
             {
@@ -408,42 +409,7 @@ namespace DotnetSpider
                 {
                     using (GetAutoLeaveHelper())
                     {
-                        IWebProxy proxy = await HttpProxy?.GetProxy(request);
-                        Response response = Downloader.Download(request, proxy);
-                        if (proxy != null && HttpProxy != null)
-                        {
-                            await HttpProxy.ReturnProxy(proxy, response);
-                        }
-
-                        bool retry = false;
-                        List<Request> targetRequests = new List<Request>();
-                        List<Dictionary<string, object>> items = new List<Dictionary<string, object>>();
-                        foreach (var i in PageProcessors)
-                        {
-                            ProcessorResult result = await i.Process(response);
-                            retry = retry || result.Retry;
-                            if (result.SkipTargetRequests == false)
-                            {
-                                targetRequests.AddRange(result.TargetRequests);
-                            }
-
-                            if (result.ResultItems.Count > 0)
-                            {
-                                items.Add(result.ResultItems);
-                            }
-                        }
-
-                        foreach (var i in Pipelines)
-                        {
-                            await i.Process(items, this);
-                        }
-
-                        Scheduler.Push(targetRequests);
-                        if (retry)
-                        {
-                            Scheduler.Push(request);
-                        }
-
+                        RunRequest(request).Wait();
                         AddSuccess();
                         Logger?.Info($"Request { index } is exec successful in { (DateTime.Now - begin).TotalSeconds } seconds.");
                     }
@@ -456,27 +422,79 @@ namespace DotnetSpider
                 finally
                 {
                     Logger?.Info($"Running:{ Unfinished },Success:{ Success },Failed:{ Failed },Total:{ Started }.");
-                    TimeSpan wait;
-                    if (RequestInterval.HasValue)
-                    {
-                        wait = RequestInterval.Value;
-                    }
-                    else if (FixedRequestDuration.HasValue)
-                    {
-                        wait = FixedRequestDuration.Value - (DateTime.Now - begin);
-                    }
-                    else
-                    {
-                        wait = TimeSpan.Zero;
-                    }
-
-                    if (wait < TimeSpan.Zero)
-                    {
-                        wait = TimeSpan.Zero;
-                    }
-
-                    await Task.Delay(wait);
+                    Wait(begin);
                 }
+            }
+        }
+
+        /// <summary>
+        /// 在爬虫线程中等待指定时间。
+        /// </summary>
+        /// <param name="begin">任务开始时间</param>
+        private void Wait(DateTime begin)
+        {
+            TimeSpan wait;
+            if (RequestInterval.HasValue)
+            {
+                wait = RequestInterval.Value;
+            }
+            else if (FixedRequestDuration.HasValue)
+            {
+                wait = FixedRequestDuration.Value - (DateTime.Now - begin);
+            }
+            else
+            {
+                wait = TimeSpan.Zero;
+            }
+
+            if (wait < TimeSpan.Zero)
+            {
+                wait = TimeSpan.Zero;
+            }
+
+            Thread.Sleep(wait);
+        }
+
+        /// <summary>
+        /// 运行爬虫任务。
+        /// </summary>
+        /// <param name="request">爬虫任务</param>
+        private async Task RunRequest(Request request)
+        {
+            IWebProxy proxy = await HttpProxy?.GetProxy(request);
+            Response response = Downloader.Download(request, proxy);
+            if (proxy != null && HttpProxy != null)
+            {
+                await HttpProxy.ReturnProxy(proxy, response);
+            }
+
+            bool retry = false;
+            List<Request> targetRequests = new List<Request>();
+            List<Dictionary<string, object>> items = new List<Dictionary<string, object>>();
+            foreach (var i in PageProcessors)
+            {
+                ProcessorResult result = await i.Process(response);
+                retry = retry || result.Retry;
+                if (result.SkipTargetRequests == false)
+                {
+                    targetRequests.AddRange(result.TargetRequests);
+                }
+
+                if (result.ResultItems.Count > 0)
+                {
+                    items.Add(result.ResultItems);
+                }
+            }
+
+            foreach (var i in Pipelines)
+            {
+                await i.Process(items, this);
+            }
+
+            Scheduler.Push(targetRequests);
+            if (retry)
+            {
+                Scheduler.Push(request);
             }
         }
         #endregion
