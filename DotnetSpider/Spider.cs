@@ -242,7 +242,7 @@ namespace DotnetSpider
             InitSpider();
             if (CheckConfiguration())
             {
-                RunSpider();
+                Parallel.For(0, Parallels, async _ => await RunSpiderThread());
             }
 
             Exit().Wait();
@@ -384,103 +384,100 @@ namespace DotnetSpider
 
         #region 私有方法
         /// <summary>
-        /// 运行爬虫
+        /// 运行爬虫线程
         /// </summary>
-        private void RunSpider()
+        private async Task RunSpiderThread()
         {
-            _ = Parallel.For(0, Parallels, async _ =>
-              {
-                  while (IsRunning)
-                  {
-                      Request request = null;
-                      while (IsRunning && request == null)
-                      {
-                          request = Scheduler.Poll(_pollTimeout);
-                      }
+            while (IsRunning)
+            {
+                Request request = null;
+                while (IsRunning && request == null)
+                {
+                    request = Scheduler.Poll(_pollTimeout);
+                }
 
-                      if (request == null)
-                      {
-                          break;
-                      }
+                if (request == null)
+                {
+                    break;
+                }
 
-                      DateTime begin = DateTime.Now;
-                      long index = AddStarting();
-                      Logger?.Info($"Task { index } has been started.\nRequest:{ request }");
-                      try
-                      {
-                          using (GetAutoLeaveHelper())
-                          {
-                              IWebProxy proxy = await HttpProxy?.GetProxy(request);
-                              Response response = Downloader.Download(request, proxy);
-                              if (proxy != null && HttpProxy != null)
-                              {
-                                  await HttpProxy.ReturnProxy(proxy, response);
-                              }
+                DateTime begin = DateTime.Now;
+                long index = AddStarting();
+                Logger?.Info($"Task { index } has been started.\nRequest:{ request }");
+                try
+                {
+                    using (GetAutoLeaveHelper())
+                    {
+                        IWebProxy proxy = await HttpProxy?.GetProxy(request);
+                        Response response = Downloader.Download(request, proxy);
+                        if (proxy != null && HttpProxy != null)
+                        {
+                            await HttpProxy.ReturnProxy(proxy, response);
+                        }
 
-                              bool retry = false;
-                              List<Request> targetRequests = new List<Request>();
-                              List<Dictionary<string, object>> items = new List<Dictionary<string, object>>();
-                              foreach (var i in PageProcessors)
-                              {
-                                  ProcessorResult result = await i.Process(response);
-                                  retry = retry || result.Retry;
-                                  if (result.SkipTargetRequests == false)
-                                  {
-                                      targetRequests.AddRange(result.TargetRequests);
-                                  }
+                        bool retry = false;
+                        List<Request> targetRequests = new List<Request>();
+                        List<Dictionary<string, object>> items = new List<Dictionary<string, object>>();
+                        foreach (var i in PageProcessors)
+                        {
+                            ProcessorResult result = await i.Process(response);
+                            retry = retry || result.Retry;
+                            if (result.SkipTargetRequests == false)
+                            {
+                                targetRequests.AddRange(result.TargetRequests);
+                            }
 
-                                  if (result.ResultItems.Count > 0)
-                                  {
-                                      items.Add(result.ResultItems);
-                                  }
-                              }
+                            if (result.ResultItems.Count > 0)
+                            {
+                                items.Add(result.ResultItems);
+                            }
+                        }
 
-                              foreach (var i in Pipelines)
-                              {
-                                  await i.Process(items, this);
-                              }
+                        foreach (var i in Pipelines)
+                        {
+                            await i.Process(items, this);
+                        }
 
-                              Scheduler.Push(targetRequests);
-                              if (retry)
-                              {
-                                  Scheduler.Push(request);
-                              }
+                        Scheduler.Push(targetRequests);
+                        if (retry)
+                        {
+                            Scheduler.Push(request);
+                        }
 
-                              AddSuccess();
-                              Logger?.Info($"Request { index } is exec successful in { (DateTime.Now - begin).TotalSeconds } seconds.");
-                          }
-                      }
-                      catch (Exception e)
-                      {
-                          AddFailed();
-                          Logger?.Error($"Error occured!\nTask { index }:{ request }\nException:{ e.Message }");
-                      }
-                      finally
-                      {
-                          Logger?.Info($"Running:{ Unfinished },Success:{ Success },Failed:{ Failed },Total:{ Started }.");
-                          TimeSpan wait;
-                          if (RequestInterval.HasValue)
-                          {
-                              wait = RequestInterval.Value;
-                          }
-                          else if (FixedRequestDuration.HasValue)
-                          {
-                              wait = FixedRequestDuration.Value - (DateTime.Now - begin);
-                          }
-                          else
-                          {
-                              wait = TimeSpan.Zero;
-                          }
+                        AddSuccess();
+                        Logger?.Info($"Request { index } is exec successful in { (DateTime.Now - begin).TotalSeconds } seconds.");
+                    }
+                }
+                catch (Exception e)
+                {
+                    AddFailed();
+                    Logger?.Error($"Error occured!\nTask { index }:{ request }\nException:{ e.Message }");
+                }
+                finally
+                {
+                    Logger?.Info($"Running:{ Unfinished },Success:{ Success },Failed:{ Failed },Total:{ Started }.");
+                    TimeSpan wait;
+                    if (RequestInterval.HasValue)
+                    {
+                        wait = RequestInterval.Value;
+                    }
+                    else if (FixedRequestDuration.HasValue)
+                    {
+                        wait = FixedRequestDuration.Value - (DateTime.Now - begin);
+                    }
+                    else
+                    {
+                        wait = TimeSpan.Zero;
+                    }
 
-                          if (wait < TimeSpan.Zero)
-                          {
-                              wait = TimeSpan.Zero;
-                          }
+                    if (wait < TimeSpan.Zero)
+                    {
+                        wait = TimeSpan.Zero;
+                    }
 
-                          await Task.Delay(wait);
-                      }
-                  }
-              });
+                    await Task.Delay(wait);
+                }
+            }
         }
         #endregion
     }
