@@ -35,7 +35,7 @@ namespace DotnetSpider.Pipeline
         /// </summary>
         /// <param name="resultItems">数据结果</param>
         /// <param name="sender">调用者</param>
-        Task Process(IReadOnlyDictionary<string, object> resultItems, dynamic sender = null);
+        Task Process(IReadOnlyDictionary<string, object> resultItems, ISpider sender = null);
 
         /// <summary>
         /// 批量处理页面解析器解析到的数据集。
@@ -43,6 +43,6 @@ namespace DotnetSpider.Pipeline
         /// </summary>
         /// <param name="resultItems">数据集</param>
         /// <param name="sender">调用者</param>
-        Task Process(IEnumerable<IReadOnlyDictionary<string, object>> resultItems, dynamic sender = null);
+        Task Process(IEnumerable<IReadOnlyDictionary<string, object>> resultItems, ISpider sender = null);
     }
 }

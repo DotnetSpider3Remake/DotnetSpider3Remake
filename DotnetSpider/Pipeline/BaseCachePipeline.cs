@@ -15,7 +15,7 @@ namespace DotnetSpider.Pipeline
     /// </summary>
     public abstract class BaseCachePipeline : BaseZeroDisposable, IPipeline
     {
-        private List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>> _caches = new List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>>();
+        private List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>> _caches = new List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>();
         private readonly object _cachesLocker = new object();
         private bool _hasInitCachePipeline = false;
         private readonly object _hasInitCachePipelineLocker = new object();
@@ -26,7 +26,7 @@ namespace DotnetSpider.Pipeline
         public ILog Logger { get; set; }
         public abstract string Name { get; set; }
 
-        public async Task Process(IReadOnlyDictionary<string, object> resultItems, dynamic sender = null)
+        public async Task Process(IReadOnlyDictionary<string, object> resultItems, ISpider sender = null)
         {
             if (EnableCache)
             {
@@ -37,7 +37,7 @@ namespace DotnetSpider.Pipeline
                     {
                         if (_caches.Count == 0 || _caches.Last().Item2 != sender)
                         {
-                            _caches.Add(Tuple.Create(
+                            _caches.Add(Tuple.Create<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>(
                                 new List<IReadOnlyDictionary<string, object>>() { resultItems },
                                 sender));
                         }
@@ -50,14 +50,16 @@ namespace DotnetSpider.Pipeline
             }
             else
             {
-                await Process(new Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>[]
+                await Process(new Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>[]
                     {
-                        Tuple.Create(new IReadOnlyDictionary<string, object>[] { resultItems }, sender)
+                        Tuple.Create<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>(
+                            new IReadOnlyDictionary<string, object>[] { resultItems }, 
+                            sender)
                     });
             }
         }
 
-        public async Task Process(IEnumerable<IReadOnlyDictionary<string, object>> resultItems, dynamic sender = null)
+        public async Task Process(IEnumerable<IReadOnlyDictionary<string, object>> resultItems, ISpider sender = null)
         {
             if (EnableCache)
             {
@@ -68,7 +70,7 @@ namespace DotnetSpider.Pipeline
                     {
                         if (_caches.Count == 0 || _caches.Last().Item2 != sender)
                         {
-                            _caches.Add(Tuple.Create(
+                            _caches.Add(Tuple.Create<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>(
                                 new List<IReadOnlyDictionary<string, object>>(resultItems),
                                 sender));
                         }
@@ -81,7 +83,7 @@ namespace DotnetSpider.Pipeline
             }
             else
             {
-                await Process(new Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>[]
+                await Process(new Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>[]
                     {
                         Tuple.Create(resultItems, sender)
                     });
@@ -93,7 +95,7 @@ namespace DotnetSpider.Pipeline
         /// </summary>
         /// <param name="caches">缓存，用一个二元对象的数组表示。二元对象的第一个成员表示resultItems，第二个成员表示sender。</param>
         /// <returns></returns>
-        protected abstract Task Process(IEnumerable<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>> caches);
+        protected abstract Task Process(IEnumerable<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>> caches);
 
         private void InitCachePipeline()
         {
@@ -134,11 +136,11 @@ namespace DotnetSpider.Pipeline
 
         private async Task Process()
         {
-            List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>> caches = null;
+            List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>> caches = null;
             lock (_cachesLocker)
             {
                 caches = _caches;
-                _caches = new List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, dynamic>>();
+                _caches = new List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>();
             }
 
             if (caches.Count > 0)

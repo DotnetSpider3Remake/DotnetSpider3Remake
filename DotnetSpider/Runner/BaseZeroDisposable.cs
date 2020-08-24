@@ -110,6 +110,18 @@ namespace DotnetSpider.Runner
             }
         }
 
+        /// <summary>
+        /// 等待所有任务完成或归零。
+        /// </summary>
+        protected void WaitFinished()
+        {
+            _waitZeroHandle.WaitOne();
+        }
+
+        /// <summary>
+        /// 获取自动设置Enter/Leave状态的辅助对象。
+        /// </summary>
+        /// <returns>辅助对象实例</returns>
         protected BaseZeroDisposableHelper GetAutoLeaveHelper()
         {
             Enter();

@@ -62,6 +62,15 @@ namespace DotnetSpider.Scheduler
         Task<Request> PollAsync();
 
         /// <summary>
+        /// 取得一个需要处理的请求对象。
+        /// 如果队列为空，会一直阻塞等待<paramref name="timeout"/>时间。
+        /// 执行Dispose后或超时返回null。
+        /// </summary>
+        /// <param name="timeout">最大等待时间</param>
+        /// <returns>执行Dispose后或timeout返回null。</returns>
+        Request Poll(TimeSpan timeout);
+
+        /// <summary>
         /// 清空队列
         /// </summary>
         void Clear();

@@ -10,19 +10,16 @@ using System.Threading.Tasks;
 namespace DotnetSpider.Scheduler
 {
     /// <summary>
-    /// 去重调度器。
-    /// 默认遍历方式为DoNotCare。
-    /// 空间复杂度O(N)，N为所有不同请求的数量。
+    /// 普通连续调度器。
     /// </summary>
-    public class DuplicateRemovedScheduler : BaseZeroDisposable, IScheduler
+    public class ListScheduler : BaseZeroDisposable, IScheduler
     {
         private readonly LinkedList<Request> _requestList = new LinkedList<Request>();
-        private readonly HashSet<Request> _requestSet = new HashSet<Request>();
         private readonly object _requestLocker = new object();
 
         public TraverseStrategy TraverseStrategy { get; set; } = TraverseStrategy.DoNotCare;
         public ILog Logger { get; set; }
-        public string Name { get; set; } = "DuplicateRemovedScheduler";
+        public string Name { get; set; } = "ListScheduler";
 
         public long Count
         {
@@ -35,7 +32,7 @@ namespace DotnetSpider.Scheduler
             }
         }
 
-        public void Clear() 
+        public void Clear()
         {
             lock (_requestLocker)
             {
@@ -94,11 +91,7 @@ namespace DotnetSpider.Scheduler
             {
                 lock (_requestLocker)
                 {
-                    if (_requestSet.Contains(request) == false)
-                    {
-                        _requestList.AddLast(request);
-                        _requestSet.Add(request);
-                    }
+                    _requestList.AddLast(request);
                 }
             }
         }
@@ -111,11 +104,7 @@ namespace DotnetSpider.Scheduler
                 {
                     foreach (var i in requests)
                     {
-                        if (_requestSet.Contains(i) == false)
-                        {
-                            _requestList.AddLast(i);
-                            _requestSet.Add(i);
-                        }
+                        _requestList.AddLast(i);
                     }
                 }
             }
@@ -136,7 +125,6 @@ namespace DotnetSpider.Scheduler
             lock (_requestLocker)
             {
                 _requestList.Clear();
-                _requestSet.Clear();
             }
         }
     }

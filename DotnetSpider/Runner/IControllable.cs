@@ -13,7 +13,7 @@ namespace DotnetSpider.Runner
         /// 暂停任务。
         /// 暂停一个不在运行的任务应该提示警告。
         /// </summary>
-        /// <returns>是否继续了一个正在运行的任务。</returns>
+        /// <returns>是否暂停了一个正在运行的任务。</returns>
         Task<bool> Pause(Action action = null);
 
         /// <summary>

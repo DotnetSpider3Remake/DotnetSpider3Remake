@@ -19,7 +19,7 @@ namespace DotnetSpider.Pipeline
             
         }
 
-        public Task Process(IReadOnlyDictionary<string, object> resultItems, dynamic _ = null)
+        public Task Process(IReadOnlyDictionary<string, object> resultItems, ISpider _ = null)
         {
             if (resultItems == null)
             {
@@ -37,7 +37,7 @@ namespace DotnetSpider.Pipeline
             return Task.CompletedTask;
         }
 
-        public Task Process(IEnumerable<IReadOnlyDictionary<string, object>> resultItems, dynamic _ = null)
+        public Task Process(IEnumerable<IReadOnlyDictionary<string, object>> resultItems, ISpider _ = null)
         {
             if (resultItems == null)
             {
