@@ -22,6 +22,8 @@ namespace DotnetSpider
         public List<IPipeline> Pipelines { get; } = new List<IPipeline>();
         public List<IResponseProcessor> PageProcessors { get; } = new List<IResponseProcessor>();
         public IHttpProxy HttpProxy { get; set; } = null;
+        public uint MaxRetry { get; set; } = 2;
+        public TimeSpan RetryInterval { get; set; } = TimeSpan.FromSeconds(1);
         public ILog Logger { get; set; } = null;
         public string Name { get; set; } = "Spider";
         public int Parallels { get; set; } = 1;
@@ -409,9 +411,34 @@ namespace DotnetSpider
                 {
                     using (GetAutoLeaveHelper())
                     {
-                        RunRequest(request).Wait();
-                        AddSuccess();
-                        Logger?.Info($"Request { index } is exec successful in { (DateTime.Now - begin).TotalSeconds } seconds.");
+                        uint tries = 0;
+                        bool success = false;
+                        do
+                        {
+                            if (tries == 0)
+                            {
+                                Logger?.Info($"Task { index } has been started.\nRequest:{ request }");
+                            }
+                            else
+                            {
+                                Logger?.Warn($"Request { index } was timeout.");
+                                Thread.Sleep(RetryInterval);
+                                Logger?.Info($"Task { index } has been retried({ tries }).");
+                            }
+                            success = RunRequest(request).Result;
+                            ++tries;
+                        } while (success == false && tries <= MaxRetry);
+
+                        if (success)
+                        {
+                            AddSuccess();
+                            Logger?.Info($"Request { index } is exec successful in { (DateTime.Now - begin).TotalSeconds } seconds.");
+                        }
+                        else
+                        {
+                            AddFailed();
+                            Logger?.Warn($"Request { index } was timeout.");
+                        }
                     }
                 }
                 catch (Exception e)
@@ -459,13 +486,19 @@ namespace DotnetSpider
         /// 运行爬虫任务。
         /// </summary>
         /// <param name="request">爬虫任务</param>
-        private async Task RunRequest(Request request)
+        /// <returns>成功获取服务器返回内容时返回true，连接超时返回false。</returns>
+        private async Task<bool> RunRequest(Request request)
         {
             IWebProxy proxy = await HttpProxy?.GetProxy(request);
             Response response = Downloader.Download(request, proxy);
             if (proxy != null && HttpProxy != null)
             {
                 await HttpProxy.ReturnProxy(proxy, response);
+            }
+
+            if (response.IsDownloaderTimeout)
+            {
+                return false;
             }
 
             bool retry = false;
@@ -496,6 +529,8 @@ namespace DotnetSpider
             {
                 Scheduler.Push(request);
             }
+
+            return true;
         }
         #endregion
     }

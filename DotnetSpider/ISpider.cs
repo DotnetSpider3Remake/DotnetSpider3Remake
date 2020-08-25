@@ -41,6 +41,18 @@ namespace DotnetSpider
         /// </summary>
         IHttpProxy HttpProxy { get; set; }
 
+        #region 超时重试属性。不放在Downloader中，是为更换代理做准备。
+        /// <summary>
+        /// 最大下载超时失败重试次数。
+        /// </summary>
+        uint MaxRetry { get; set; }
+
+        /// <summary>
+        /// 下载超时后，重试下载的等待时间。
+        /// </summary>
+        TimeSpan RetryInterval { get; set; }
+        #endregion
+
         /// <summary>
         /// 并行运行任务数量
         /// </summary>

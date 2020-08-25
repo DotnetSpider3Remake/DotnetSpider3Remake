@@ -67,7 +67,7 @@ namespace DotnetSpider.Scheduler
         /// 执行Dispose后或超时返回null。
         /// </summary>
         /// <param name="timeout">最大等待时间</param>
-        /// <returns>执行Dispose后或timeout返回null。</returns>
+        /// <returns>执行Dispose后或超时返回null。</returns>
         Request Poll(TimeSpan timeout);
 
         /// <summary>
