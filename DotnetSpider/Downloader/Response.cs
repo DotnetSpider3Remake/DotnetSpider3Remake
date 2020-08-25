@@ -29,7 +29,8 @@ namespace DotnetSpider.Downloader
         public string TargetUrl { get; set; }
 
         /// <summary>
-        /// 请求的结果, 一般情况下都是 String, 特殊情况下可以重载 Downloader 返回的是下载的二进制流
+        /// 请求的结果, 一般情况下都是string, 特殊情况下返回的是ByteArray。
+        /// 具体类型由Downloader决定。
         /// </summary>
         public object Content { get; set; }
 

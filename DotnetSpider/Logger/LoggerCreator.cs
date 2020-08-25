@@ -1,10 +1,12 @@
 ﻿using log4net.Config;
-using log4net.Core;
+using log4net;
 using log4net.Repository;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using log4net.Core;
+using System.Reflection;
 
 namespace DotnetSpider.Logger
 {
@@ -20,7 +22,7 @@ namespace DotnetSpider.Logger
             try
             {
                 FileInfo fi = new FileInfo(Path.GetFileName(AppDomain.CurrentDomain.BaseDirectory + "/Logger/log4ds3r.config"));
-                _loggerRepository = LoggerManager.CreateRepository("ds3r");
+                _loggerRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
                 XmlConfigurator.Configure(_loggerRepository, fi);
             }
             catch (Exception e)
@@ -35,9 +37,9 @@ namespace DotnetSpider.Logger
         /// </summary>
         /// <param name="name">名称</param>
         /// <returns>日志模块实例，获取失败时返回null。</returns>
-        public static ILogger GetLogger(string name)
+        public static ILog GetLogger(string name)
         {
-            return _loggerRepository?.GetLogger(name);
+            return _loggerRepository == null ? null : LogManager.GetLogger(Assembly.GetEntryAssembly(), name);
         }
     }
 }

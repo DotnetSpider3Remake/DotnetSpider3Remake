@@ -16,7 +16,28 @@ namespace DotnetSpider.Proxy.Helper
         /// </summary>
         public IWebProxy InnerProxy { get; set; }
 
-        public ICredentials Credentials { get => InnerProxy.Credentials; set => InnerProxy.Credentials = value; }
+        private static readonly ICredentials _emptyCredentials = new NetworkCredential();
+        public ICredentials Credentials 
+        {
+            get
+            {
+                if (InnerProxy != null)
+                {
+                    return InnerProxy.Credentials;
+                }
+                else 
+                {
+                    return _emptyCredentials;
+                }
+            } 
+            set 
+            {
+                if (InnerProxy != null)
+                {
+                    InnerProxy.Credentials = value;
+                }
+            }
+        }
 
         public Uri GetProxy(Uri destination)
         {

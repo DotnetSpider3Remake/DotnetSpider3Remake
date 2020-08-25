@@ -242,6 +242,11 @@ namespace DotnetSpider
                 }
             }
 
+            lock (_stateLocker)
+            {
+                _isRunning = true;
+            }
+
             InitSpider();
             if (CheckConfiguration())
             {
@@ -489,9 +494,14 @@ namespace DotnetSpider
         /// <returns>成功获取服务器返回内容时返回true，连接超时返回false。</returns>
         private async Task<bool> RunRequest(Request request)
         {
-            IWebProxy proxy = await HttpProxy?.GetProxy(request);
+            IWebProxy proxy = null;
+            if (HttpProxy != null)
+            {
+                proxy = await HttpProxy.GetProxy(request);
+            } 
+
             Response response = Downloader.Download(request, proxy);
-            if (proxy != null && HttpProxy != null)
+            if (proxy != null)
             {
                 await HttpProxy.ReturnProxy(proxy, response);
             }
