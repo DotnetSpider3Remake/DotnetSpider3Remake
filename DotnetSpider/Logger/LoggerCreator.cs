@@ -15,23 +15,6 @@ namespace DotnetSpider.Logger
     /// </summary>
     public static class LoggerCreator
     {
-        private static readonly ILoggerRepository _loggerRepository;
-
-        static LoggerCreator()
-        {
-            try
-            {
-                FileInfo fi = new FileInfo(Path.GetFileName(AppDomain.CurrentDomain.BaseDirectory + "/Logger/log4ds3r.config"));
-                _loggerRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
-                XmlConfigurator.Configure(_loggerRepository, fi);
-            }
-            catch (Exception e)
-            {
-                _loggerRepository = null;
-                Console.WriteLine($"初始化日志模块失败，异常为：{ e.Message }");
-            }
-        }
-
         /// <summary>
         /// 获取日志模块。
         /// </summary>
@@ -39,7 +22,15 @@ namespace DotnetSpider.Logger
         /// <returns>日志模块实例，获取失败时返回null。</returns>
         public static ILog GetLogger(string name)
         {
-            return _loggerRepository == null ? null : LogManager.GetLogger(Assembly.GetEntryAssembly(), name);
+            Assembly assembly = Assembly.GetCallingAssembly();
+            if (LogManager.GetCurrentLoggers(assembly).Length == 0)
+            {
+                ILoggerRepository repository = LogManager.GetRepository(assembly);
+                FileInfo fi = new FileInfo(AppDomain.CurrentDomain.BaseDirectory + "/Logger/log4ds3r.config");
+                XmlConfigurator.Configure(repository, fi);
+            }
+
+            return LogManager.GetLogger(assembly, name);
         }
     }
 }

@@ -80,7 +80,25 @@ namespace DotnetSpider.Downloader
                             {
                                 AppendContentHeaders(response.Headers, httpResponse.Content.Headers);
                                 response.ContentType = httpResponse.Content.Headers?.ContentType?.ToString() ?? string.Empty;
-                                if (ExcludeMediaTypes.Contains(response.ContentType))
+                                bool isText = false;
+                                if (response.ContentType == string.Empty)
+                                {
+                                    isText = true;
+                                }
+                                else
+                                {
+                                    string[] contentTypes = response.ContentType.Split(';');
+                                    foreach (var contentType in contentTypes)
+                                    {
+                                        if (contentType != string.Empty && ExcludeMediaTypes.Contains(contentType))
+                                        {
+                                            isText = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (isText)
                                 {
                                     response.Content = await httpResponse.Content.ReadAsStringAsync();
                                 }

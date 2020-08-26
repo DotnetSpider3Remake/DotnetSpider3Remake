@@ -71,9 +71,8 @@ namespace DotnetSpider
         TimeSpan? FixedRequestDuration { get; set; }
 
         /// <summary>
-        /// 是否继续获取<seealso cref="Request"/>。
+        /// 判断是否应该停止运行爬虫的函数。
         /// </summary>
-        /// <returns>是否继续获取<seealso cref="Request"/></returns>
-        bool ContinuePollRequest();
+        Func<ISpider, bool> ConditionOfStop { get; set; }
     }
 }

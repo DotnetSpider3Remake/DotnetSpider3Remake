@@ -29,6 +29,7 @@ namespace DotnetSpider
         public int Parallels { get; set; } = 1;
         public TimeSpan? RequestInterval { get; set; } = null;
         public TimeSpan? FixedRequestDuration { get; set; } = null;
+        public Func<ISpider, bool> ConditionOfStop { get; set; } = null;
         #endregion
 
         #region 新增属性
@@ -250,6 +251,13 @@ namespace DotnetSpider
             InitSpider();
             if (CheckConfiguration())
             {
+                if (ConditionOfStop != null)
+                {
+                    Thread thread = new Thread(JudgeConditionThread);
+                    thread.IsBackground = true;
+                    thread.Start();
+                }
+
                 Parallel.For(0, Parallels, RunSpiderThread);
             }
 
@@ -259,13 +267,6 @@ namespace DotnetSpider
         public async Task RunAsync()
         {
             await Task.Run(Run);
-        }
-        #endregion
-
-        #region 可以在派生类中重新实现的接口函数
-        public virtual bool ContinuePollRequest()
-        {
-            return true;
         }
         #endregion
 
@@ -541,6 +542,36 @@ namespace DotnetSpider
             }
 
             return true;
+        }
+
+        private void JudgeConditionThread()
+        {
+            while (IsRunning)
+            {
+                try
+                {
+                    using (GetAutoLeaveHelper())
+                    {
+                        if (ConditionOfStop(this))
+                        {
+                            break;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger?.Error($"Exception ocurred when judge stop condition.Exception:\n{ e }");
+                }
+                finally
+                {
+                    Thread.Sleep(100);
+                }
+            }
+
+            if (IsRunning)
+            {
+                _ = Exit();
+            }
         }
         #endregion
     }

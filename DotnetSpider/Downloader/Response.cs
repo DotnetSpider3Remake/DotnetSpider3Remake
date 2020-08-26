@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using HtmlAgilityPack;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Net;
+using System.Xml;
 
 namespace DotnetSpider.Downloader
 {
@@ -38,6 +40,60 @@ namespace DotnetSpider.Downloader
         /// 请求结果的类型
         /// </summary>
         public string ContentType { get; set; }
+
+        private HtmlNode _htmlNode = null;
+        /// <summary>
+        /// 解析Content后得到的html节点
+        /// </summary>
+        [JsonIgnore]
+        public HtmlNode HtmlNode
+        {
+            get
+            {
+                if (_htmlNode != null)
+                {
+                    return _htmlNode;
+                }
+
+                string content = Content as string;
+                if (content == null)
+                {
+                    return null;
+                }
+
+                HtmlDocument htmlDocument = new HtmlDocument();
+                htmlDocument.LoadHtml(content);
+                _htmlNode = htmlDocument.DocumentNode;
+                return _htmlNode;
+            }
+        }
+
+        private XmlElement _xmlElement = null;
+        /// <summary>
+        /// 解析Content后得到的xml节点
+        /// </summary>
+        [JsonIgnore]
+        public XmlElement XmlElement
+        {
+            get
+            {
+                if (_xmlElement != null)
+                {
+                    return _xmlElement;
+                }
+
+                string content = Content as string;
+                if (content == null)
+                {
+                    return null;
+                }
+
+                XmlDocument doc = new XmlDocument();
+                doc.LoadXml(content);
+                _xmlElement = doc.DocumentElement;
+                return _xmlElement;
+            }
+        }
 
         /// <summary>
         /// HTTP返回代码
