@@ -95,7 +95,7 @@ namespace DotnetSpider
                     using (GetAutoLeaveHelper())
                     {
                         uint tries = 0;
-                        bool success = false;
+                        Response response;
                         do
                         {
                             if (tries == 0)
@@ -108,19 +108,28 @@ namespace DotnetSpider
                                 Thread.Sleep(RetryInterval);
                                 Logger?.Info($"Task { index } has been retried({ tries }).");
                             }
-                            success = RunRequest(request).Result;
+                            response = Download(request);
                             ++tries;
-                        } while (success == false && tries <= MaxRetry);
+                        } while (response.IsDownloaderTimeout && tries <= MaxRetry);
 
-                        if (success)
+                        if (response.IsSuccessStatusCode)
                         {
+                            var items = ParsePage(response);
+                            SaveResultItems(items);
                             AddSuccess();
                             Logger?.Info($"Request { index } is exec successful in { (DateTime.Now - begin).TotalSeconds } seconds.");
                         }
                         else
                         {
                             AddFailed();
-                            Logger?.Warn($"Request { index } was timeout.");
+                            if (response.IsDownloaderTimeout)
+                            {
+                                Logger?.Warn($"Request { index } was timeout.");
+                            }
+                            else
+                            {
+                                Logger?.Warn($"Request { index } failed. Status code : { response.StatusCode } .");
+                            }
                         }
                     }
                 }
@@ -167,35 +176,40 @@ namespace DotnetSpider
         }
 
         /// <summary>
-        /// 运行爬虫任务。
+        /// 下载页面。
         /// </summary>
-        /// <param name="request">爬虫任务</param>
-        /// <returns>成功获取服务器返回内容时返回true，连接超时返回false。</returns>
-        private async Task<bool> RunRequest(Request request)
+        /// <param name="request">请求</param>
+        /// <returns>响应</returns>
+        private Response Download(Request request)
         {
             IWebProxy proxy = null;
             if (HttpProxy != null)
             {
-                proxy = await HttpProxy.GetProxy(request);
-            } 
+                proxy = HttpProxy.GetProxy(request).Result;
+            }
 
             Response response = Downloader.Download(request, proxy);
             if (proxy != null)
             {
-                await HttpProxy.ReturnProxy(proxy, response);
+                HttpProxy.ReturnProxy(proxy, response).Wait();
             }
 
-            if (response.IsDownloaderTimeout)
-            {
-                return false;
-            }
+            return response;
+        }
 
+        /// <summary>
+        /// 解析响应页面。
+        /// </summary>
+        /// <param name="response">响应页面</param>
+        /// <returns>解析结果</returns>
+        private List<Dictionary<string, object>> ParsePage(Response response)
+        {
             bool retry = false;
             List<Request> targetRequests = new List<Request>();
             List<Dictionary<string, object>> items = new List<Dictionary<string, object>>();
             foreach (var i in PageProcessors)
             {
-                ProcessorResult result = await i.Process(response);
+                ProcessorResult result = i.Process(response).Result;
                 retry = retry || result.Retry;
                 if (result.SkipTargetRequests == false)
                 {
@@ -208,18 +222,28 @@ namespace DotnetSpider
                 }
             }
 
-            foreach (var i in Pipelines)
-            {
-                await i.Process(items, this);
-            }
-
             Scheduler.Push(targetRequests);
             if (retry)
             {
-                Scheduler.Push(request);
+                Scheduler.Push(response.Request);
             }
 
-            return true;
+            return items;
+        }
+
+        /// <summary>
+        /// 保存解析结果。
+        /// </summary>
+        /// <param name="items">解析结果</param>
+        private void SaveResultItems(IReadOnlyList<Dictionary<string, object>> items)
+        {
+            List<Task> tasks = new List<Task>();
+            foreach (var i in Pipelines)
+            {
+                tasks.Add(i.Process(items, this));
+            }
+
+            Task.WaitAll(tasks.ToArray());
         }
 
         private bool CheckRequestIsEmtpy(ISpider spider)

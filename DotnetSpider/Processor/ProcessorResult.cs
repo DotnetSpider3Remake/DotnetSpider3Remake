@@ -12,6 +12,7 @@ namespace DotnetSpider.Processor
     {
         /// <summary>
         /// 是否需要重试当前页面。
+        /// 需要调度器支持。
         /// </summary>
         public bool Retry { get; set; } = false;
 

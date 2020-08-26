@@ -123,7 +123,7 @@ namespace DotnetSpider.Downloader
             }
             catch (Exception e)
             {
-                Logger?.Error($"HTTP请求时发生异常，请求内容： { request }", e);
+                Logger?.Error($"HTTP request failed： { request }", e);
             }
 
             return response;
