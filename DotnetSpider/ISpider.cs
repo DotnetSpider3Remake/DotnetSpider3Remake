@@ -74,5 +74,30 @@ namespace DotnetSpider
         /// 判断是否应该停止运行爬虫的函数。
         /// </summary>
         Func<ISpider, bool> ConditionOfStop { get; set; }
+
+        /// <summary>
+        /// 成功的任务数量。
+        /// </summary>
+        long Success { get; }
+
+        /// <summary>
+        /// 失败的任务数量。
+        /// </summary>
+        long Failed { get; }
+
+        /// <summary>
+        /// 结束的任务数量。
+        /// </summary>
+        long Finished { get; }
+
+        /// <summary>
+        /// 已经启动的任务数量。
+        /// </summary>
+        long Started { get; }
+
+        /// <summary>
+        /// 执行中的任务数量。
+        /// </summary>
+        long Unfinished { get; }
     }
 }

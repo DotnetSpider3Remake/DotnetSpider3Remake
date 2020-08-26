@@ -40,10 +40,9 @@ namespace GetBaiduLinks
         {
             Spider spider = new Spider()
             {
-                Logger = LoggerCreator.GetLogger("baidu"),
                 Name = "baidu",
                 Parallels = 8,
-                ConditionOfStop = s => ((Spider)s).Finished >= 1000
+                ConditionOfStop = s => s.Finished >= 100
             };
 
             spider.PageProcessors.Add(new ResponseProcessor()

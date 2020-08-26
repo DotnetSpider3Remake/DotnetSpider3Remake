@@ -14,388 +14,65 @@ using System.Threading.Tasks;
 
 namespace DotnetSpider
 {
-    public class Spider : BaseZeroDisposable, ISpider
+    public class Spider : BaseSpider
     {
-        #region 继承自ISpider的属性
-        public IScheduler Scheduler { get; set; } = new DuplicateRemovedScheduler();
-        public IDownloader Downloader { get; set; } = new HttpClientDownloader();
-        public List<IPipeline> Pipelines { get; } = new List<IPipeline>();
-        public List<IResponseProcessor> PageProcessors { get; } = new List<IResponseProcessor>();
-        public IHttpProxy HttpProxy { get; set; } = null;
-        public uint MaxRetry { get; set; } = 2;
-        public TimeSpan RetryInterval { get; set; } = TimeSpan.FromSeconds(1);
-        public ILog Logger { get; set; } = null;
-        public string Name { get; set; } = "Spider";
-        public int Parallels { get; set; } = 1;
-        public TimeSpan? RequestInterval { get; set; } = null;
-        public TimeSpan? FixedRequestDuration { get; set; } = null;
-        public Func<ISpider, bool> ConditionOfStop { get; set; } = null;
-        #endregion
-
-        #region 新增属性
-        private bool _isRunning = false;
-        private bool _hasExit = false;
-        private readonly object _stateLocker = new object();
+        #region 公共属性
         /// <summary>
-        /// 是否正在运行。
+        /// 当没有剩余请求时停止运行。
         /// </summary>
-        public bool IsRunning
-        {
-            get
-            {
-                lock (_stateLocker)
-                {
-                    return !_hasExit && _isRunning;
-                }
-            }
-        }
+        public bool StopWhenNoRequest { get; set; } = false;
 
         /// <summary>
-        /// 是否已经退出。
+        /// 没有剩余请求时的最大等待时间。
         /// </summary>
-        public bool HasExit
-        {
-            get
-            {
-                lock (_stateLocker)
-                {
-                    return _hasExit;
-                }
-            }
-        }
-
-        private bool _hasStarted = false;
-        private readonly object _hasStartedLocker = new object();
-        /// <summary>
-        /// 是否已经启动过。
-        /// 即使已经退出，仍然返回true。
-        /// </summary>
-        public bool HasStarted
-        {
-            get
-            {
-                lock (_hasStartedLocker)
-                {
-                    return _hasStarted;
-                }
-            }
-        }
-
-        private long _countSuccess = 0;
-        private long _countFailed = 0;
-        private long _countStarted = 0;
-        private readonly object _countLocker = new object();
-        /// <summary>
-        /// 成功的任务数量。
-        /// </summary>
-        public long Success
-        {
-            get 
-            {
-                lock (_countLocker)
-                {
-                    return _countSuccess;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 失败的任务数量。
-        /// </summary>
-        public long Failed
-        {
-            get
-            {
-                lock (_countLocker)
-                {
-                    return _countFailed;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 结束的任务数量。
-        /// </summary>
-        public long Finished
-        {
-            get
-            {
-                lock (_countLocker)
-                {
-                    return _countFailed + _countSuccess;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 已经启动的任务数量。
-        /// </summary>
-        public long Started
-        {
-            get
-            {
-                lock (_countLocker)
-                {
-                    return _countStarted;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 执行中的任务数量。
-        /// </summary>
-        public long Unfinished
-        {
-            get
-            {
-                lock (_countLocker)
-                {
-                    return _countStarted - _countFailed - _countSuccess;
-                }
-            }
-        }
+        public TimeSpan MaxNoRequestDuration { get; set; } = TimeSpan.FromSeconds(20);
         #endregion
 
         #region 私有常量
-        static readonly TimeSpan _pollTimeout = TimeSpan.FromMilliseconds(10);
+        private static readonly TimeSpan _pollTimeout = TimeSpan.FromMilliseconds(10);
         #endregion
 
-        #region 实现接口
-        public async Task<bool> Continue()
-        {
-            return await Task.Run<bool>(() =>
-            {
-                lock (_stateLocker)
-                {
-                    if (_hasExit || _isRunning)
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        _isRunning = true;
-                        return true;
-                    }
-                }
-            });
-        }
-
-        public async Task<bool> Exit()
-        {
-            return await Task.Run<bool>(() =>
-            {
-                lock (_stateLocker)
-                {
-                    if (_hasExit)
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        _hasExit = true;
-                    }
-                }
-
-                Scheduler.Clear();
-                WaitFinished();
-                return true;
-            });
-        }
-
-        public async Task<bool> Pause(Action action = null)
-        {
-            return await Task.Run<bool>(() =>
-            {
-                bool success;
-                lock (_stateLocker)
-                {
-                    if (!_hasExit && _isRunning)
-                    {
-                        _isRunning = false;
-                        success = true;
-                    }
-                    else
-                    {
-                        success = false;
-                    }
-                }
-
-                if (success)
-                {
-                    action?.Invoke();
-                }
-
-                return success;
-            });
-        }
-
-        public void Run()
-        {
-            lock (_hasStartedLocker)
-            {
-                if (_hasStarted)
-                {
-                    return;
-                }
-                else
-                {
-                    _hasStarted = true;
-                }
-            }
-
-            lock (_stateLocker)
-            {
-                _isRunning = true;
-            }
-
-            InitSpider();
-            if (CheckConfiguration())
-            {
-                if (ConditionOfStop != null)
-                {
-                    Thread thread = new Thread(JudgeConditionThread);
-                    thread.IsBackground = true;
-                    thread.Start();
-                }
-
-                Parallel.For(0, Parallels, RunSpiderThread);
-            }
-
-            Exit().Wait();
-        }
-
-        public async Task RunAsync()
-        {
-            await Task.Run(Run);
-        }
+        #region 私有变量
+        /// <summary>
+        /// 第一次剩余请求为空的时间。
+        /// </summary>
+        private DateTime _firstEmptyTime = DateTime.MinValue;
         #endregion
 
-        #region 可以在派生类中重新实现的函数
-        protected override void DisposeOthers()
-        {
-            Exit().Wait();
-
-            Scheduler.Dispose();
-            Scheduler = null;
-            Downloader.Dispose();
-            Downloader = null;
-            foreach (var i in Pipelines)
-            {
-                i.Dispose();
-            }
-
-            Pipelines.Clear();
-
-            foreach (var i in PageProcessors)
-            {
-                i.Dispose();
-            }
-
-            PageProcessors.Clear();
-
-            HttpProxy?.Dispose();
-            HttpProxy = null;
-            Logger = null;
-        }
-
         /// <summary>
-        /// 初始化爬虫。
+        /// 构造爬虫实例。
         /// </summary>
-        protected virtual void InitSpider()
+        /// <param name="name">爬虫名称</param>
+        /// <param name="scheduler">调度器</param>
+        /// <param name="downloader">下载器</param>
+        public Spider(string name = null, IScheduler scheduler = null, IDownloader downloader = null)
         {
-
+            Name = name ?? "Spider";
+            Scheduler = scheduler ?? new DuplicateRemovedScheduler();
+            Downloader = downloader ?? new HttpClientDownloader();
         }
 
-        /// <summary>
-        /// 检测配置是否正确。
-        /// </summary>
-        /// <returns>配置是否正确</returns>
-        protected virtual bool CheckConfiguration()
+        protected override void InitSpider()
         {
-            bool success = true;
-
-            if (Scheduler == null)
+            base.InitSpider();
+            if (StopWhenNoRequest)
             {
-                Logger?.Fatal("Scheduler is null.");
-                success = false;
-            }
-
-            if (Downloader == null)
-            {
-                Logger?.Fatal("Downloader is null.");
-                success = false;
-            }
-
-            if (Pipelines.Count == 0)
-            {
-                Logger?.Fatal("Pipelines are empty.");
-                success = false;
-            }
-
-            if (PageProcessors.Count == 0)
-            {
-                Logger?.Fatal("PageProcessors are empty.");
-                success = false;
-            }
-
-            if (Parallels < 1)
-            {
-                Logger?.Fatal("Parallels is less than 1.");
-                success = false;
-            }
-
-            if (RequestInterval != null && FixedRequestDuration != null)
-            {
-                Logger?.Fatal("RequestInterval and FixedRequestDuration can not exist both.");
-                success = false;
-            }
-
-            return success;
-        }
-
-        #endregion
-
-        #region 保护方法
-        /// <summary>
-        /// 增加成功的任务数量。
-        /// </summary>
-        protected void AddSuccess()
-        {
-            lock (_countLocker)
-            {
-                ++_countSuccess;
+                if (ConditionOfStop == null)
+                {
+                    ConditionOfStop = CheckRequestIsEmtpy;
+                }
+                else 
+                {
+                    var condition = ConditionOfStop;
+                    ConditionOfStop = s => condition(s) || CheckRequestIsEmtpy(s);
+                }
             }
         }
 
-        /// <summary>
-        /// 增加启动的任务数量。
-        /// </summary>
-        /// <returns>最后增加的任务的索引。</returns>
-        protected long AddStarting()
-        {
-            lock (_countLocker)
-            {
-                return ++_countStarted;
-            }
-        }
-
-        /// <summary>
-        /// 增加失败的任务数量。
-        /// </summary>
-        protected void AddFailed()
-        {
-            lock (_countLocker)
-            {
-                ++_countFailed;
-            }
-        }
-        #endregion
-
-        #region 私有方法
         /// <summary>
         /// 运行爬虫线程
         /// </summary>
-        private void RunSpiderThread(int _)
+        protected override void RunSpiderThread()
         {
             while (IsRunning)
             {
@@ -460,6 +137,7 @@ namespace DotnetSpider
             }
         }
 
+        #region 私有方法
         /// <summary>
         /// 在爬虫线程中等待指定时间。
         /// </summary>
@@ -544,34 +222,22 @@ namespace DotnetSpider
             return true;
         }
 
-        private void JudgeConditionThread()
+        private bool CheckRequestIsEmtpy(ISpider spider)
         {
-            while (IsRunning)
+            if (spider.Scheduler.Count > 0)
             {
-                try
-                {
-                    using (GetAutoLeaveHelper())
-                    {
-                        if (ConditionOfStop(this))
-                        {
-                            break;
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger?.Error($"Exception ocurred when judge stop condition.Exception:\n{ e }");
-                }
-                finally
-                {
-                    Thread.Sleep(100);
-                }
+                _firstEmptyTime = DateTime.MinValue;
+            }
+            else if (MaxNoRequestDuration <= TimeSpan.Zero)
+            {
+                return true;
+            }
+            else if (_firstEmptyTime != DateTime.MinValue)
+            {
+                return DateTime.Now - _firstEmptyTime > MaxNoRequestDuration;
             }
 
-            if (IsRunning)
-            {
-                _ = Exit();
-            }
+            return false;
         }
         #endregion
     }

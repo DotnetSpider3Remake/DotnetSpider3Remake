@@ -32,5 +32,23 @@ namespace DotnetSpider.Logger
 
             return LogManager.GetLogger(assembly, name);
         }
+
+        /// <summary>
+        /// 获取日志模块。
+        /// </summary>
+        /// <param name="type">需要使用日志的模块</param>
+        /// <returns>日志模块实例，获取失败时返回null。</returns>
+        public static ILog GetLogger(Type type)
+        {
+            Assembly assembly = Assembly.GetCallingAssembly();
+            if (LogManager.GetCurrentLoggers(assembly).Length == 0)
+            {
+                ILoggerRepository repository = LogManager.GetRepository(assembly);
+                FileInfo fi = new FileInfo(AppDomain.CurrentDomain.BaseDirectory + "/Logger/log4ds3r.config");
+                XmlConfigurator.Configure(repository, fi);
+            }
+
+            return LogManager.GetLogger(assembly, type.Name);
+        }
     }
 }

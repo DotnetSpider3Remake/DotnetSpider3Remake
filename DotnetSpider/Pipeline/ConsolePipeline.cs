@@ -59,7 +59,11 @@ namespace DotnetSpider.Pipeline
                 }
             }
 
-            Logger?.Info($"Out put to { Name } : { count } lines.");
+            if (count > 0)
+            {
+                Logger?.Info($"Out put to { Name } : { count } lines.");
+            }
+
             return Task.CompletedTask;
         }
     }

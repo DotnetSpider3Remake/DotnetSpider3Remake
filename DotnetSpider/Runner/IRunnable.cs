@@ -14,5 +14,21 @@ namespace DotnetSpider.Runner
         /// </summary>
         /// <returns></returns>
         Task RunAsync();
+
+        /// <summary>
+        /// 是否正在运行。
+        /// </summary>
+        bool IsRunning { get; }
+
+        /// <summary>
+        /// 是否已经退出。
+        /// </summary>
+        bool HasExit { get; }
+
+        /// <summary>
+        /// 是否已经启动过。
+        /// 即使已经退出，仍然返回true。
+        /// </summary>
+        bool HasStarted { get; }
     }
 }

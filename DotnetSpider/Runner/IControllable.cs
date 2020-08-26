@@ -14,19 +14,38 @@ namespace DotnetSpider.Runner
         /// 暂停一个不在运行的任务应该提示警告。
         /// </summary>
         /// <returns>是否暂停了一个正在运行的任务。</returns>
-        Task<bool> Pause(Action action = null);
+        Task<bool> PauseAsync(Action action = null);
 
         /// <summary>
         /// 继续任务。
         /// 继续一个不在暂停的任务应该提示警告。
         /// </summary>
         /// <returns>是否继续了一个处于暂停的任务。</returns>
-        Task<bool> Continue();
+        Task<bool> ContinueAsync();
 
         /// <summary>
         /// 退出任务。
         /// </summary>
         /// <returns>是否退出一个不处于退出状态的任务。</returns>
-        Task<bool> Exit();
+        Task<bool> ExitAsync();
+        /// <summary>
+        /// 暂停任务。
+        /// 暂停一个不在运行的任务应该提示警告。
+        /// </summary>
+        /// <returns>是否暂停了一个正在运行的任务。</returns>
+        bool Pause(Action action = null);
+
+        /// <summary>
+        /// 继续任务。
+        /// 继续一个不在暂停的任务应该提示警告。
+        /// </summary>
+        /// <returns>是否继续了一个处于暂停的任务。</returns>
+        bool Continue();
+
+        /// <summary>
+        /// 退出任务。
+        /// </summary>
+        /// <returns>是否退出一个不处于退出状态的任务。</returns>
+        bool Exit();
     }
 }
