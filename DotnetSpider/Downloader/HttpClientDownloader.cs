@@ -116,14 +116,20 @@ namespace DotnetSpider.Downloader
                             response.StatusCode = HttpStatusCode.RequestTimeout;
                             response.IsDownloaderTimeout = true;
                         }
-
-                        throw;
+                        else if (e.InnerException is IOException)
+                        {
+                            Logger?.Warn($"HTTP request failed：\"{ e.InnerException.Message }\"\n{ request }");
+                        }
+                        else
+                        {
+                            throw;
+                        }
                     }
                 }
             }
             catch (Exception e)
             {
-                Logger?.Error($"HTTP request failed： { request }", e);
+                Logger?.Error($"HTTP request failed unexpectedly ： { request }", e);
             }
 
             return response;

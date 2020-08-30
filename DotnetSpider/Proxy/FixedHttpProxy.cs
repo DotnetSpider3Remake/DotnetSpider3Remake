@@ -9,7 +9,7 @@ namespace DotnetSpider.Proxy
     /// <summary>
     /// 固定代理获取器，返回一个固定的代理。
     /// 可以重写GetProxy，实现复杂的身份认证。
-    /// 派生类需要注意Enter和Leave的调用
+    /// 派生类需要注意Enter和Leave的调用。
     /// </summary>
     public class FixedHttpProxy : BaseZeroDisposable, IHttpProxy
     {

@@ -108,6 +108,7 @@ namespace DotnetSpider
                                 Thread.Sleep(RetryInterval);
                                 Logger?.Info($"Task { index } has been retried({ tries }).");
                             }
+
                             response = Download(request);
                             ++tries;
                         } while (response.IsDownloaderTimeout && tries <= MaxRetry);
