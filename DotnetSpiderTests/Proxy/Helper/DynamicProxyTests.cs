@@ -24,12 +24,13 @@ namespace DotnetSpider.Proxy.Helper.Tests
         {
             DynamicProxy dynamicProxy = new DynamicProxy
             {
-                InnerProxy = new WebProxy("http://127.0.0.1:1080")
+                InnerProxy = new WebProxy("http://127.0.0.1:1080", false)
             };
-            Uri src = new Uri("http://127.0.0.1");
+            Uri src = new Uri("http://test.test");
             Uri actual = dynamicProxy.GetProxy(src);
             Assert.AreNotEqual(src, actual);
         }
+
         [TestMethod()]
         public void CredentialsTest0()
         {
