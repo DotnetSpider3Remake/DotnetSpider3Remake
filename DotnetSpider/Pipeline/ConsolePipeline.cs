@@ -23,7 +23,11 @@ namespace DotnetSpider.Pipeline
         {
             if (resultItems == null)
             {
+#if NET45
+                return Task.FromResult(0);
+#else
                 return Task.CompletedTask;
+#endif
             }
 
             int count = 0;
@@ -34,14 +38,22 @@ namespace DotnetSpider.Pipeline
             }
 
             Logger?.Info($"Out put to { Name } : { count } lines.");
+#if NET45
+            return Task.FromResult(0);
+#else
             return Task.CompletedTask;
+#endif
         }
 
         public Task Process(IEnumerable<IReadOnlyDictionary<string, object>> resultItems, ISpider _ = null)
         {
             if (resultItems == null)
             {
+#if NET45
+                return Task.FromResult(0);
+#else
                 return Task.CompletedTask;
+#endif
             }
 
             int count = 0;
@@ -64,7 +76,11 @@ namespace DotnetSpider.Pipeline
                 Logger?.Info($"Out put to { Name } : { count } lines.");
             }
 
+#if NET45
+            return Task.FromResult(0);
+#else
             return Task.CompletedTask;
+#endif
         }
     }
 }

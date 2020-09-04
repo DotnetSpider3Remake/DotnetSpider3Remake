@@ -15,6 +15,8 @@ namespace DotnetSpider.Logger
     /// </summary>
     public static class LoggerCreator
     {
+        private static readonly FileInfo _fiDefaultConfig = new FileInfo(AppDomain.CurrentDomain.BaseDirectory + "/Logger/log4ds3r.config");
+
         /// <summary>
         /// 获取日志模块。
         /// </summary>
@@ -25,9 +27,16 @@ namespace DotnetSpider.Logger
             Assembly assembly = Assembly.GetCallingAssembly();
             if (LogManager.GetCurrentLoggers(assembly).Length == 0)
             {
+                if (_fiDefaultConfig.Exists == false) {
+                    return null;
+                }
+                
                 ILoggerRepository repository = LogManager.GetRepository(assembly);
-                FileInfo fi = new FileInfo(AppDomain.CurrentDomain.BaseDirectory + "/Logger/log4ds3r.config");
-                XmlConfigurator.Configure(repository, fi);
+                XmlConfigurator.Configure(repository, _fiDefaultConfig);
+                if (repository.GetAppenders().Length == 0)
+                {
+                    return null;
+                }
             }
 
             return LogManager.GetLogger(assembly, name);

@@ -35,7 +35,11 @@ namespace DotnetSpider.Proxy
 
         public virtual Task ReturnProxy(IWebProxy proxy, Response response)
         {
+#if NET45
+            return Task.FromResult(0);
+#else
             return Task.CompletedTask;
+#endif
         }
     }
 }
