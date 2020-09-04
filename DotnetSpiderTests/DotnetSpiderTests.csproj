@@ -1,10 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net45</TargetFramework>
-
+    <TargetFrameworks>netcoreapp3.1;net45</TargetFrameworks>
     <IsPackable>false</IsPackable>
-
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
@@ -13,7 +11,6 @@
     <EmbeddedResource Remove="FakesAssemblies\**" />
     <None Remove="FakesAssemblies\**" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.9" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
@@ -33,5 +30,4 @@
   <ItemGroup>
     <AdditionalDesignTimeBuildInput Remove="FakesAssemblies\**" />
   </ItemGroup>
-
 </Project>

@@ -75,6 +75,7 @@ namespace DotnetSpider.Logger.Tests
             Assert.AreEqual(1, logger.Logger.Repository.GetAppenders().Length);
         }
 
+#if NET45        
         [TestMethod()]
         public void GetLoggerStringTest1()
         {
@@ -91,6 +92,8 @@ namespace DotnetSpider.Logger.Tests
                 type.SetStaticField("_fiDefaultConfig", orginalPath);
             }
         }
+#endif
+
 
         [TestMethod()]
         public void GetLoggerTypeTest0()
@@ -102,6 +105,7 @@ namespace DotnetSpider.Logger.Tests
             Assert.AreEqual(1, logger.Logger.Repository.GetAppenders().Length);
         }
 
+#if NET45
         [TestMethod()]
         public void GetLoggerTypeTest1()
         {
@@ -118,5 +122,6 @@ namespace DotnetSpider.Logger.Tests
                 type.SetStaticField("_fiDefaultConfig", orginalPath);
             }
         }
+#endif
     }
 }
