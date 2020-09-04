@@ -11,9 +11,10 @@ jobs:
     - uses: actions/checkout@v2
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.102
     - name: Build with dotnet
-      run: dotnet build --configuration Release
+      run: |
+        dotnet restore --configuration Release
+        "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\devenv.exe" ./DotnetSpider3-Remake.sln /Build Release
+        
     - name: Test with dotnet
       run: dotnet test --configuration Release
