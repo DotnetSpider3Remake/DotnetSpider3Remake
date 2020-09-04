@@ -9,12 +9,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      
     - name: Build with dotnet
       run: |
         dotnet restore --configuration Release
         "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\devenv.exe" ./DotnetSpider3-Remake.sln /Build Release
         
     - name: Test with dotnet
-      run: dotnet test --configuration Release
+      run: |
+        "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe"  DotnetSpiderTests/bin/Release/net45/DotnetSpiderTests.dll
+        "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe"  DotnetSpiderTests/bin/Release/netcoreapp3.1/DotnetSpiderTests.dll
