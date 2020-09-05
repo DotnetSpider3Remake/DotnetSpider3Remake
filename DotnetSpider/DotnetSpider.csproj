@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Product>DotnetSpider 3 Remake</Product>
     <PackageId>DotnetSpider3Remake</PackageId>
@@ -13,7 +13,7 @@ It is a remake of DotnetSpider 3.x.</Description>
     <RepositoryUrl>https://github.com/DotnetSpider3Remake/DotnetSpider3Remake</RepositoryUrl>
     <RepositoryType>GIT</RepositoryType>
     <Version>0.0.1</Version>
-    <GeneratePackageOnBuild Condition="'$(TargetFramework)'!='netcoreapp2.0'">true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageTags>DotnetSpider;crawler;dotnet core</PackageTags>
   </PropertyGroup>
 
