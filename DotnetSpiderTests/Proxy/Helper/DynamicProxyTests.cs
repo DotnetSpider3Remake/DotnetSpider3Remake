@@ -49,6 +49,25 @@ namespace DotnetSpider.Proxy.Helper.Tests
         }
 
         [TestMethod()]
+        public void CredentialsTest2()
+        {
+            var input = new NetworkCredential();
+            DynamicProxy dynamicProxy = new DynamicProxy();
+            dynamicProxy.Credentials = input;
+            Assert.AreNotSame(input, dynamicProxy.Credentials);
+        }
+
+        [TestMethod()]
+        public void CredentialsTest3()
+        {
+            var input = new NetworkCredential();
+            DynamicProxy dynamicProxy = new DynamicProxy();
+            dynamicProxy.InnerProxy = new WebProxy("http://127.0.0.1:1080");
+            dynamicProxy.Credentials = input;
+            Assert.AreSame(input, dynamicProxy.Credentials);
+        }
+
+        [TestMethod()]
         public void IsBypassedTest0()
         {
             DynamicProxy dynamicProxy = new DynamicProxy();
