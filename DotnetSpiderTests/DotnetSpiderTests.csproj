@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net472</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
@@ -10,8 +10,15 @@
     <Compile Remove="FakesAssemblies\**" />
     <EmbeddedResource Remove="FakesAssemblies\**" />
     <None Remove="FakesAssemblies\**" />
-     <AdditionalDesignTimeBuildInput Remove="FakesAssemblies\**" />
+    <AdditionalDesignTimeBuildInput Remove="FakesAssemblies\**" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+     <Compile Remove="PrivateObjectPrivateType.cs" />
+     <EmbeddedResource Remove="PrivateObjectPrivateType.cs" />
+     <None Remove="PrivateObjectPrivateType.cs" />
+     <AdditionalDesignTimeBuildInput Remove="PrivateObjectPrivateType.cs" />
+  </ItemGroup>  
+  
   <ItemGroup>
       <PackageReference Include="log4net" Version="2.0.9" />
       <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
@@ -26,14 +33,5 @@
 
   <ItemGroup>
       <ProjectReference Include="..\DotnetSpider\DotnetSpider.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="DotnetSpider.Fakes">
-      <HintPath>FakesAssemblies\DotnetSpider.Fakes.dll</HintPath>
-    </Reference>
-    <Reference Include="log4net.2.0.9.0.Fakes">
-      <HintPath>FakesAssemblies\log4net.2.0.9.0.Fakes.dll</HintPath>
-    </Reference>
   </ItemGroup>
 </Project>
