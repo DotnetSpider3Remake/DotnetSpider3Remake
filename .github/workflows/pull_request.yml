@@ -24,4 +24,4 @@ jobs:
       run: MSBuild -property:Configuration=Release
         
     - name: Test
-      run: VSTest.Console MSBuild DotnetSpiderTests\bin\Release\netcoreapp3.1\DotnetSpiderTests.dll
+      run: VSTest.Console DotnetSpiderTests\bin\Release\netcoreapp3.1\DotnetSpiderTests.dll
