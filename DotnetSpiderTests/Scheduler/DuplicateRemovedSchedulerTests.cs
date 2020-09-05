@@ -5,12 +5,25 @@ using System.Collections.Generic;
 using System.Text;
 using DotnetSpider.Downloader;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace DotnetSpider.Scheduler.Tests
 {
     [TestClass()]
     public class DuplicateRemovedSchedulerTests
     {
+        [TestMethod()]
+        [Timeout(5000)]
+        public void PropertyTest()
+        {
+            using DuplicateRemovedScheduler scheduler = new DuplicateRemovedScheduler();
+            log4net.Fakes.StubILog log = new log4net.Fakes.StubILog();
+            scheduler.Logger = log;
+            Assert.AreSame(log, scheduler.Logger);
+            scheduler.Name = "name";
+            Assert.AreEqual("name", scheduler.Name);
+        }
+
         [TestMethod()]
         [Timeout(5000)]
         public void ClearTest()
@@ -58,6 +71,31 @@ namespace DotnetSpider.Scheduler.Tests
             var poll = Task.Run(s.Poll);
             await Task.Delay(50);
             Assert.IsFalse(poll.IsCompleted);
+            s.Dispose();
+            Assert.IsNull(await poll);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task PollTest3()
+        {
+            using var s = new DuplicateRemovedScheduler();
+            var poll = Task.Run(() => s.Poll(TimeSpan.FromMilliseconds(100)));
+            await Task.Delay(50);
+            Assert.IsFalse(poll.IsCompleted);
+            Assert.IsNull(await poll);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task PollTest4()
+        {
+            using var s = new DuplicateRemovedScheduler();
+            var poll = Task.Run(() => s.Poll(Timeout.InfiniteTimeSpan));
+            await Task.Delay(50);
+            Assert.IsFalse(poll.IsCompleted);
+            s.Dispose();
+            Assert.IsNull(await poll);
         }
 
         [TestMethod()]
