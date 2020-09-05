@@ -22,7 +22,7 @@ namespace DotnetSpider.Processor
         public bool SkipTargetRequests { get; set; } = false;
 
         /// <summary>
-        /// 忽略当前页面不作解析处理。
+        /// 忽略当前页面解析结果。
         /// </summary>
         public bool Bypass { get; set; } = false;
 
@@ -170,41 +170,23 @@ namespace DotnetSpider.Processor
 
         private static bool IsAvailable(Request request)
         {
-            if (request is null || request.Url is null)
-            {
-                return false;
-            }
-
-            var url = request.Url.ToString();
-            if (url.Length < 6)
-            {
-                return false;
-            }
-
-            var schema = url.Substring(0, 5).ToLower();
-            if (!schema.StartsWith("http") && !schema.StartsWith("https"))
-            {
-                return false;
-            }
-
-            return true;
+            return Uri.TryCreate(request.Url, UriKind.Absolute, out Uri uri) &&
+                uri.Scheme.StartsWith("http");
         }
 
         /// <summary>
         /// 计算最终的URL
         /// </summary>
-        /// <param name="url">Base uri</param>
-        /// <param name="refer">Relative uri</param>
+        /// <param name="refer">Base uri</param>
+        /// <param name="url">Relative uri</param>
         /// <returns>最终的URL</returns>
         private static string CanonicalizeUrl(string url, string refer)
         {
-            try
+            if (Uri.TryCreate(new Uri(refer), url, out Uri result))
             {
-                Uri bas = new Uri(refer);
-                Uri abs = new Uri(bas, url);
-                return abs.AbsoluteUri;
+                return result.OriginalString;
             }
-            catch
+            else
             {
                 return url;
             }

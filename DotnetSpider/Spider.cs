@@ -217,7 +217,7 @@ namespace DotnetSpider
                     targetRequests.AddRange(result.TargetRequests);
                 }
 
-                if (result.ResultItems.Count > 0)
+                if (result.Bypass == false && result.ResultItems.Count > 0)
                 {
                     items.Add(result.ResultItems);
                 }
