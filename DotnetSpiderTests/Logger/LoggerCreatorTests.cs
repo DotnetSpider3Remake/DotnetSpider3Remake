@@ -16,6 +16,7 @@ namespace DotnetSpider.Logger.Tests
     {
         private IDisposable _shimsContext = null;
         private bool _configExist = true;
+        private bool _parseConfig = true;
 
         [TestInitialize]
         public void InitTest()
@@ -23,11 +24,12 @@ namespace DotnetSpider.Logger.Tests
             _shimsContext = ShimsContext.Create();
 
             log4net.Fakes.ShimLogManager.GetCurrentLoggersAssembly = _ => new ILog[0];
+            System.IO.Fakes.ShimFileInfo.AllInstances.ExistsGet = _ => _configExist;
             log4net.Repository.Fakes.StubILoggerRepository repository = new log4net.Repository.Fakes.StubILoggerRepository
             {
                 GetAppenders = () =>
                 {
-                    if (_configExist)
+                    if (_parseConfig)
                     {
                         return new log4net.Appender.IAppender[] { new log4net.Appender.Fakes.StubIAppender() };
                     }
@@ -60,6 +62,7 @@ namespace DotnetSpider.Logger.Tests
             _shimsContext.Dispose();
             _shimsContext = null;
             _configExist = true;
+            _parseConfig = true;
         }
 
         [TestMethod()]
@@ -80,6 +83,14 @@ namespace DotnetSpider.Logger.Tests
             Assert.IsNull(logger);
         }
 
+        [TestMethod()]
+        public void GetLoggerStringTest2()
+        {
+            _parseConfig = false;
+            var logger = LoggerCreator.GetLogger("test");
+            Assert.IsNull(logger);
+        }
+
 
         [TestMethod()]
         public void GetLoggerTypeTest0()
@@ -95,6 +106,14 @@ namespace DotnetSpider.Logger.Tests
         public void GetLoggerTypeTest1()
         {
             _configExist = false;
+            var logger = LoggerCreator.GetLogger(typeof(string));
+            Assert.IsNull(logger);
+        }
+
+        [TestMethod()]
+        public void GetLoggerTypeTest2()
+        {
+            _parseConfig = false;
             var logger = LoggerCreator.GetLogger(typeof(string));
             Assert.IsNull(logger);
         }
