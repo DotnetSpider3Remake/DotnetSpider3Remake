@@ -142,6 +142,15 @@ namespace DotnetSpider.Downloader
         }
 
         /// <summary>
+        /// 返回Uri实例。
+        /// </summary>
+        /// <returns>Uri实例。</returns>
+        public Uri GetUri()
+        {
+            return new Uri(Url);
+        }
+
+        /// <summary>
         /// 比较obj是否与当前实例相等。
         /// 不比较Properties属性。
         /// </summary>

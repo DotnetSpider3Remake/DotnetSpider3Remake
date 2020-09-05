@@ -31,7 +31,7 @@ namespace DotnetSpider.Downloader
         /// <summary xml:lang="zh-CN">
         /// 定义哪些类型的内容不需要当成文件下载，即文本格式。
         /// </summary>
-        public readonly HashSet<string> ExcludeMediaTypes = new HashSet<string>
+        public HashSet<string> ExcludeMediaTypes { get; } = new HashSet<string>
         {
             "",
             "text/html",
@@ -53,6 +53,7 @@ namespace DotnetSpider.Downloader
         /// 构造HttpClient函数，一般每个线程中只调用一次。
         /// </summary>
         public Func<HttpMessageHandler, HttpClient> HttpClientGetter { get; set; } = handler => new HttpClient(handler);
+
 
         protected override async Task<Response> Downloading(Request request, IWebProxy proxy = null)
         {
