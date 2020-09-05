@@ -15,19 +15,19 @@ namespace DotnetSpider.Logger.Tests
     public class LoggerCreatorTests
     {
         private IDisposable _shimsContext = null;
+        private bool _configExist = true;
 
         [TestInitialize]
         public void InitTest()
         {
             _shimsContext = ShimsContext.Create();
 
-            bool fileExist = false;
             log4net.Fakes.ShimLogManager.GetCurrentLoggersAssembly = _ => new ILog[0];
             log4net.Repository.Fakes.StubILoggerRepository repository = new log4net.Repository.Fakes.StubILoggerRepository
             {
                 GetAppenders = () =>
                 {
-                    if (fileExist)
+                    if (_configExist)
                     {
                         return new log4net.Appender.IAppender[] { new log4net.Appender.Fakes.StubIAppender() };
                     }
@@ -38,11 +38,7 @@ namespace DotnetSpider.Logger.Tests
                 }
             };
             log4net.Fakes.ShimLogManager.GetRepositoryAssembly = _ => repository;
-            log4net.Config.Fakes.ShimXmlConfigurator.ConfigureILoggerRepositoryFileInfo = (rep, fi) => 
-            {
-                fileExist = ReferenceEquals(rep, repository) && fi.Exists;
-                return null;
-            };
+            log4net.Config.Fakes.ShimXmlConfigurator.ConfigureILoggerRepositoryFileInfo = (rep, fi) => null;
             log4net.Core.Fakes.StubILogger logger = new log4net.Core.Fakes.StubILogger
             {
                 RepositoryGet = () => repository
@@ -63,6 +59,7 @@ namespace DotnetSpider.Logger.Tests
         {
             _shimsContext?.Dispose();
             _shimsContext = null;
+            _configExist = true;
         }
 
         [TestMethod()]
@@ -75,24 +72,13 @@ namespace DotnetSpider.Logger.Tests
             Assert.AreEqual(1, logger.Logger.Repository.GetAppenders().Length);
         }
 
-#if NET45        
         [TestMethod()]
         public void GetLoggerStringTest1()
         {
-            PrivateType type = new PrivateType(typeof(LoggerCreator));
-            FileInfo orginalPath = (FileInfo)type.GetStaticField("_fiDefaultConfig");
-            try
-            {
-                type.SetStaticField("_fiDefaultConfig", new FileInfo("notexsit.notexsit"));
-                var logger = LoggerCreator.GetLogger("test");
-                Assert.IsNull(logger);
-            }
-            finally
-            {
-                type.SetStaticField("_fiDefaultConfig", orginalPath);
-            }
+            _configExist = false;
+            var logger = LoggerCreator.GetLogger("test");
+            Assert.IsNull(logger);
         }
-#endif
 
 
         [TestMethod()]
@@ -105,23 +91,12 @@ namespace DotnetSpider.Logger.Tests
             Assert.AreEqual(1, logger.Logger.Repository.GetAppenders().Length);
         }
 
-#if NET45
         [TestMethod()]
         public void GetLoggerTypeTest1()
         {
-            PrivateType type = new PrivateType(typeof(LoggerCreator));
-            FileInfo orginalPath = (FileInfo)type.GetStaticField("_fiDefaultConfig");
-            try
-            {
-                type.SetStaticField("_fiDefaultConfig", new FileInfo("notexsit.notexsit"));
-                var logger = LoggerCreator.GetLogger(typeof(string));
-                Assert.IsNull(logger);
-            }
-            finally
-            {
-                type.SetStaticField("_fiDefaultConfig", orginalPath);
-            }
+            _configExist = false;
+            var logger = LoggerCreator.GetLogger(typeof(string));
+            Assert.IsNull(logger);
         }
-#endif
     }
 }
