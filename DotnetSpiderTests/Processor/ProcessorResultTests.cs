@@ -5,14 +5,15 @@ using System.Collections.Generic;
 using System.Text;
 using DotnetSpider.Downloader;
 using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DotnetSpider.Processor.Tests
 {
+    [ExcludeFromCodeCoverage]
     [TestClass()]
     public class ProcessorResultTests
     {
         #region 构造函数
-
         [TestMethod()]
         public void ProcessorResultTest0()
         {

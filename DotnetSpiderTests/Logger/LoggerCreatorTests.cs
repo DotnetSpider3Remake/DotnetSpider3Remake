@@ -57,7 +57,7 @@ namespace DotnetSpider.Logger.Tests
         [TestCleanup]
         public void CleanTest()
         {
-            _shimsContext?.Dispose();
+            _shimsContext.Dispose();
             _shimsContext = null;
             _configExist = true;
         }
