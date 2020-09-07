@@ -1,6 +1,7 @@
 ﻿using DotnetSpider.Runner.Helper;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DotnetSpider.Runner
 {
@@ -76,6 +77,20 @@ namespace DotnetSpider.Runner
         protected virtual void DisposeOthers()
         {
             
+        }
+
+        /// <summary>
+        /// 等待，直到本实例释放资源。
+        /// 一般应仅在派生类的工作子线程中调用。
+        /// </summary>
+        /// <param name="isCancelled">是否取消等待的函数。由提供者保证线程安全。</param>
+        protected async Task WaitForDispose(Func<bool> isCancelled = null)
+        {
+            while ((isCancelled == null || isCancelled() == false) 
+                && IsDisposed == false)
+            {
+                await Task.Delay(1);
+            }
         }
 
         #region 派生类执行操作或任务前后需要执行的方法

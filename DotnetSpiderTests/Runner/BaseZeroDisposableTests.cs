@@ -71,6 +71,78 @@ namespace DotnetSpider.Runner.Tests
             privateInstance.Invoke("WaitFinished");
         }
 
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task WaitForDisposeTest0()
+        {
+            using Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
+            {
+                CallBase = true
+            };
+            PrivateObject privateInstance = new PrivateObject(instance);
+            bool cancelled = false;
+            object isCanclledLocker = new object();
+            Func<bool> isCancelled = () =>
+            {
+                lock (isCanclledLocker)
+                {
+                    return cancelled;
+                }
+            };
+            Task wait = (Task)privateInstance.Invoke("WaitForDispose", isCancelled);
+            Assert.IsFalse(wait.IsCompleted);
+            await Task.Delay(10);
+            Assert.IsFalse(wait.IsCompleted);
+            instance.Dispose();
+            await wait;
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task WaitForDisposeTest1()
+        {
+            using Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
+            {
+                CallBase = true
+            };
+            PrivateObject privateInstance = new PrivateObject(instance);
+            Task wait = (Task)privateInstance.Invoke("WaitForDispose", (Func<bool>)null);
+            Assert.IsFalse(wait.IsCompleted);
+            await Task.Delay(10);
+            Assert.IsFalse(wait.IsCompleted);
+            instance.Dispose();
+            await wait;
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task WaitForDisposeTest2()
+        {
+            using Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
+            {
+                CallBase = true
+            };
+            PrivateObject privateInstance = new PrivateObject(instance);
+            bool cancelled = false;
+            object isCanclledLocker = new object();
+            Func<bool> isCancelled = () =>
+            {
+                lock (isCanclledLocker)
+                {
+                    return cancelled;
+                }
+            };
+            Task wait = (Task)privateInstance.Invoke("WaitForDispose", isCancelled);
+            Assert.IsFalse(wait.IsCompleted);
+            await Task.Delay(10);
+            Assert.IsFalse(wait.IsCompleted);
+            lock (isCanclledLocker)
+            {
+                cancelled = true;
+            }
+
+            await wait;
+        }
 
         [TestMethod()]
         [Timeout(5000)]
