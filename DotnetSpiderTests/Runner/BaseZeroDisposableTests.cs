@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.QualityTools.Testing.Fakes.Stubs;
+using System.Threading;
 
 namespace DotnetSpider.Runner.Tests
 {
@@ -80,21 +81,13 @@ namespace DotnetSpider.Runner.Tests
                 CallBase = true
             };
             PrivateObject privateInstance = new PrivateObject(instance);
-            bool cancelled = false;
-            object isCanclledLocker = new object();
-            Func<bool> isCancelled = () =>
-            {
-                lock (isCanclledLocker)
-                {
-                    return cancelled;
-                }
-            };
-            Task wait = (Task)privateInstance.Invoke("WaitForDispose", isCancelled);
+            CancellationTokenSource tokenSource = new CancellationTokenSource();
+            Task<bool> wait = (Task<bool>)privateInstance.Invoke("WaitForDispose", tokenSource.Token);
             Assert.IsFalse(wait.IsCompleted);
             await Task.Delay(10);
             Assert.IsFalse(wait.IsCompleted);
-            instance.Dispose();
-            await wait;
+            tokenSource.Cancel();
+            Assert.IsFalse(await wait);
         }
 
         [TestMethod()]
@@ -106,12 +99,12 @@ namespace DotnetSpider.Runner.Tests
                 CallBase = true
             };
             PrivateObject privateInstance = new PrivateObject(instance);
-            Task wait = (Task)privateInstance.Invoke("WaitForDispose", (Func<bool>)null);
+            Task<bool> wait = (Task<bool>)privateInstance.Invoke("WaitForDispose", (CancellationToken?)null);
             Assert.IsFalse(wait.IsCompleted);
             await Task.Delay(10);
             Assert.IsFalse(wait.IsCompleted);
             instance.Dispose();
-            await wait;
+            Assert.IsTrue(await wait);
         }
 
         [TestMethod()]
@@ -123,25 +116,10 @@ namespace DotnetSpider.Runner.Tests
                 CallBase = true
             };
             PrivateObject privateInstance = new PrivateObject(instance);
-            bool cancelled = false;
-            object isCanclledLocker = new object();
-            Func<bool> isCancelled = () =>
-            {
-                lock (isCanclledLocker)
-                {
-                    return cancelled;
-                }
-            };
-            Task wait = (Task)privateInstance.Invoke("WaitForDispose", isCancelled);
+            CancellationTokenSource tokenSource = new CancellationTokenSource(10);
+            Task<bool> wait = (Task<bool>)privateInstance.Invoke("WaitForDispose", tokenSource.Token);
             Assert.IsFalse(wait.IsCompleted);
-            await Task.Delay(10);
-            Assert.IsFalse(wait.IsCompleted);
-            lock (isCanclledLocker)
-            {
-                cancelled = true;
-            }
-
-            await wait;
+            Assert.IsFalse(await wait);
         }
 
         [TestMethod()]

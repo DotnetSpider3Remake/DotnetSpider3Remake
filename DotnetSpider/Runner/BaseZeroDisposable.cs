@@ -83,14 +83,17 @@ namespace DotnetSpider.Runner
         /// 等待，直到本实例释放资源。
         /// 一般应仅在派生类的工作子线程中调用。
         /// </summary>
-        /// <param name="isCancelled">是否取消等待的函数。由提供者保证线程安全。</param>
-        protected async Task WaitForDispose(Func<bool> isCancelled = null)
+        /// <param name="isCancelled">取消凭证</param>
+        /// <returns>是否已经释放资源。</returns>
+        protected async Task<bool> WaitForDispose(CancellationToken? cancellationToken)
         {
-            while ((isCancelled == null || isCancelled() == false) 
-                && IsDisposed == false)
+            while ((cancellationToken == null || !cancellationToken.Value.IsCancellationRequested) &&
+                !IsDisposed)
             {
                 await Task.Delay(1);
             }
+
+            return IsDisposed;
         }
 
         #region 派生类执行操作或任务前后需要执行的方法
