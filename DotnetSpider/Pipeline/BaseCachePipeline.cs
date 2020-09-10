@@ -24,7 +24,7 @@ namespace DotnetSpider.Pipeline
         public bool EnableCache { get; set; } = true;
         public TimeSpan MaxCacheTime { get; set; } = TimeSpan.FromSeconds(1);
         public ILog Logger { get; set; }
-        public abstract string Name { get; set; }
+        public  string Name { get; set; }
 
         public async Task Process(IReadOnlyDictionary<string, object> resultItems, ISpider sender = null)
         {
@@ -43,7 +43,7 @@ namespace DotnetSpider.Pipeline
                         }
                         else
                         {
-                            ((List<IReadOnlyDictionary<string, object>>)(_caches.Last().Item1)).Add(resultItems);
+                            ((List<IReadOnlyDictionary<string, object>>)_caches.Last().Item1).Add(resultItems);
                         }
                     }
                 });
@@ -76,7 +76,7 @@ namespace DotnetSpider.Pipeline
                         }
                         else
                         {
-                            ((List<IReadOnlyDictionary<string, object>>)(_caches.Last().Item1)).AddRange(resultItems);
+                            ((List<IReadOnlyDictionary<string, object>>)_caches.Last().Item1).AddRange(resultItems);
                         }
                     }
                 });
@@ -158,11 +158,8 @@ namespace DotnetSpider.Pipeline
 
         private async Task WaitForNextProcess()
         {
-            DateTime begin = DateTime.Now;
-            while (DateTime.Now - begin >= MaxCacheTime && IsDisposed == false)
-            {
-                await Task.Delay(1);//每隔1ms检测一次是否执行过Dispose。
-            }
+            CancellationTokenSource source = new CancellationTokenSource(MaxCacheTime);
+            await WaitForDispose(source.Token);
         }
     }
 }
