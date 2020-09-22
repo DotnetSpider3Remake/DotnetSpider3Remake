@@ -7,28 +7,49 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.QualityTools.Testing.Fakes.Stubs;
 using System.Threading;
+using Microsoft.QualityTools.Testing.Fakes;
 
 namespace DotnetSpider.Runner.Tests
 {
     [TestClass()]
     public class BaseZeroDisposableTests
     {
+        private IDisposable _shimsContext = null;
+        Fakes.StubBaseZeroDisposable _instance = null;
+        PrivateObject _private = null;
+
+        [TestInitialize]
+        public void Init()
+        {
+            _shimsContext = ShimsContext.Create();
+            _instance = new Fakes.StubBaseZeroDisposable
+            {
+                CallBase = true
+            };
+            _private = new PrivateObject(_instance, new PrivateType(typeof(BaseZeroDisposable)));
+        }
+
+        [TestCleanup]
+        public void Clean()
+        {
+            _private = null;
+            _instance.Dispose();
+            _instance = null;
+            _shimsContext.Dispose();
+            _shimsContext = null;
+        }
+
         [TestMethod()]
         [Timeout(5000)]
         public void DisposeTest()
         {
-            using Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
-            {
-                CallBase = true
-            };
-            PrivateObject privateInstance = new PrivateObject(instance);
-            privateInstance.Invoke("Enter");
-            var work = Task.Run(instance.Dispose);
+            _private.Invoke("Enter");
+            var work = Task.Run(_instance.Dispose);
             var delay = Task.Delay(100);
             Assert.AreEqual(1, Task.WaitAny(work, delay));
             Assert.IsTrue(delay.IsCompleted);
             Assert.IsFalse(work.IsCompleted);
-            privateInstance.Invoke("Leave");
+            _private.Invoke("Leave");
             work.Wait();
         }
 
@@ -36,11 +57,7 @@ namespace DotnetSpider.Runner.Tests
         [Timeout(5000)]
         public void DisposeOthersTest0()
         {
-            Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
-            {
-                CallBase = true
-            };
-            instance.Dispose();
+            _instance.Dispose();
         }
 
         [TestMethod()]
@@ -48,15 +65,11 @@ namespace DotnetSpider.Runner.Tests
         public void DisposeOthersTest1()
         {
             int called = 0;
-            Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
-            {
-                CallBase = true,
-                DisposeOthers01 = () => ++called
-            };
-            instance.Dispose();
+            _instance.DisposeOthers01 = () => ++called;
+            _instance.Dispose();
             Assert.AreEqual(1, called, "BaseZeroDisposable.DisposeOthers has never been called.");
-            instance.Dispose();
-            instance.Dispose();
+            _instance.Dispose();
+            _instance.Dispose();
             Assert.AreEqual(1, called, "BaseZeroDisposable.DisposeOthers would been called only once.");
         }
 
@@ -64,25 +77,15 @@ namespace DotnetSpider.Runner.Tests
         [Timeout(5000)]
         public void WaitFinishedTest0()
         {
-            using Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
-            {
-                CallBase = true
-            };
-            PrivateObject privateInstance = new PrivateObject(instance);
-            privateInstance.Invoke("WaitFinished");
+            _private.Invoke("WaitFinished");
         }
 
         [TestMethod()]
         [Timeout(5000)]
         public async Task WaitForDisposeTest0()
         {
-            using Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
-            {
-                CallBase = true
-            };
-            PrivateObject privateInstance = new PrivateObject(instance);
             CancellationTokenSource tokenSource = new CancellationTokenSource();
-            Task<bool> wait = (Task<bool>)privateInstance.Invoke("WaitForDispose", tokenSource.Token);
+            Task<bool> wait = (Task<bool>)_private.Invoke("WaitForDispose", tokenSource.Token);
             Assert.IsFalse(wait.IsCompleted);
             await Task.Delay(10);
             Assert.IsFalse(wait.IsCompleted);
@@ -94,16 +97,11 @@ namespace DotnetSpider.Runner.Tests
         [Timeout(5000)]
         public async Task WaitForDisposeTest1()
         {
-            using Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
-            {
-                CallBase = true
-            };
-            PrivateObject privateInstance = new PrivateObject(instance);
-            Task<bool> wait = (Task<bool>)privateInstance.Invoke("WaitForDispose", (CancellationToken?)null);
+            Task<bool> wait = (Task<bool>)_private.Invoke("WaitForDispose", (CancellationToken?)null);
             Assert.IsFalse(wait.IsCompleted);
             await Task.Delay(10);
             Assert.IsFalse(wait.IsCompleted);
-            instance.Dispose();
+            _instance.Dispose();
             Assert.IsTrue(await wait);
         }
 
@@ -111,13 +109,8 @@ namespace DotnetSpider.Runner.Tests
         [Timeout(5000)]
         public async Task WaitForDisposeTest2()
         {
-            using Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
-            {
-                CallBase = true
-            };
-            PrivateObject privateInstance = new PrivateObject(instance);
             CancellationTokenSource tokenSource = new CancellationTokenSource(10);
-            Task<bool> wait = (Task<bool>)privateInstance.Invoke("WaitForDispose", tokenSource.Token);
+            Task<bool> wait = (Task<bool>)_private.Invoke("WaitForDispose", tokenSource.Token);
             Assert.IsFalse(wait.IsCompleted);
             Assert.IsFalse(await wait);
         }
@@ -126,18 +119,13 @@ namespace DotnetSpider.Runner.Tests
         [Timeout(5000)]
         public void WaitFinishedTest1()
         {
-            using Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
-            {
-                CallBase = true
-            };
-            PrivateObject privateInstance = new PrivateObject(instance);
-            privateInstance.Invoke("Enter");
-            var work = Task.Run(() => privateInstance.Invoke("WaitFinished"));
+            _private.Invoke("Enter");
+            var work = Task.Run(() => _private.Invoke("WaitFinished"));
             var delay = Task.Delay(100);
             Assert.AreEqual(1, Task.WaitAny(work, delay));
             Assert.IsTrue(delay.IsCompleted);
             Assert.IsFalse(work.IsCompleted);
-            privateInstance.Invoke("Leave");
+            _private.Invoke("Leave");
             work.Wait();
         }
 
@@ -145,28 +133,18 @@ namespace DotnetSpider.Runner.Tests
         [Timeout(5000)]
         public void IsDisposedTest()
         {
-            Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
-            {
-                CallBase = true
-            };
-            PrivateObject privateInstance = new PrivateObject(instance);
-            Assert.IsFalse((bool)privateInstance.GetProperty("IsDisposed"));
-            instance.Dispose();
-            Assert.IsTrue((bool)privateInstance.GetProperty("IsDisposed"));
+            Assert.IsFalse((bool)_private.GetProperty("IsDisposed"));
+            _instance.Dispose();
+            Assert.IsTrue((bool)_private.GetProperty("IsDisposed"));
         }
 
         [TestMethod()]
         [Timeout(5000)]
         public void MaxDisposeWaitTest()
         {
-            using Fakes.StubBaseZeroDisposable instance = new Fakes.StubBaseZeroDisposable
-            {
-                CallBase = true
-            };
-            PrivateObject privateInstance = new PrivateObject(instance);
-            privateInstance.SetProperty("MaxDisposeWait", TimeSpan.FromMilliseconds(100));
-            privateInstance.Invoke("Enter");
-            var work = Task.Run(instance.Dispose);
+            _private.SetProperty("MaxDisposeWait", TimeSpan.FromMilliseconds(100));
+            _private.Invoke("Enter");
+            var work = Task.Run(_instance.Dispose);
             var delay = Task.Delay(50);
             Assert.AreEqual(1, Task.WaitAny(work, delay));
             Assert.IsTrue(delay.IsCompleted);
