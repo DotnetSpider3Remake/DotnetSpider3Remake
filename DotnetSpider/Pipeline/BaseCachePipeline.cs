@@ -28,6 +28,11 @@ namespace DotnetSpider.Pipeline
 
         public async Task Process(IReadOnlyDictionary<string, object> resultItems, ISpider sender = null)
         {
+            if (resultItems == null)
+            {
+                return;
+            }
+
             if (EnableCache)
             {
                 InitCachePipeline();
@@ -61,6 +66,11 @@ namespace DotnetSpider.Pipeline
 
         public async Task Process(IEnumerable<IReadOnlyDictionary<string, object>> resultItems, ISpider sender = null)
         {
+            if (resultItems == null)
+            {
+                return;
+            }
+
             if (EnableCache)
             {
                 InitCachePipeline();

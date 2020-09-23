@@ -228,5 +228,141 @@ namespace DotnetSpider.Pipeline.Tests
             await Task.Delay(100);
             Assert.IsFalse(callRunCachePipeline);
         }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessIReadOnlyDictionaryOfStringObjectISpiderTest0()
+        {
+            bool callInitCachePipeline = false;
+            _instanceShim.InitCachePipeline = () => callInitCachePipeline = true;
+            var caches = (List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>)_private.GetField("_caches");
+            await _instance.Process((IReadOnlyDictionary<string, object>)null, null);
+            Assert.IsFalse(callInitCachePipeline);
+            Assert.AreEqual(0, caches.Count);
+
+            await _instance.Process(new Dictionary<string, object>(), null);
+            Assert.IsTrue(callInitCachePipeline);
+            Assert.AreEqual(1, caches.Count);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessIReadOnlyDictionaryOfStringObjectISpiderTest1()
+        {
+            bool callInitCachePipeline = false;
+            _instanceShim.InitCachePipeline = () => callInitCachePipeline = true;
+            var caches = (List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>)_private.GetField("_caches");
+            caches.Add(Tuple.Create<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>(new List<IReadOnlyDictionary<string, object>> { null }, null));
+            await _instance.Process(new Dictionary<string, object>(), null);
+            Assert.IsTrue(callInitCachePipeline);
+            Assert.AreEqual(1, caches.Count);
+            Assert.AreEqual(2, caches[0].Item1.Count());
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessIReadOnlyDictionaryOfStringObjectISpiderTest2()
+        {
+            bool callInitCachePipeline = false;
+            _instanceShim.InitCachePipeline = () => callInitCachePipeline = true;
+            var caches = (List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>)_private.GetField("_caches");
+            caches.Add(Tuple.Create<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>(null, null));
+            await _instance.Process(new Dictionary<string, object>(), new DotnetSpider.Fakes.StubISpider());
+            Assert.IsTrue(callInitCachePipeline);
+            Assert.AreEqual(2, caches.Count);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessIReadOnlyDictionaryOfStringObjectISpiderTest3()
+        {
+            bool callInitCachePipeline = false;
+            _instanceShim.InitCachePipeline = () => callInitCachePipeline = true;
+            bool callProcess = false;
+            _instance.ProcessIEnumerableOfTupleOfIEnumerableOfIReadOnlyDictionaryOfStringObjectISpider = caches =>
+            {
+                Assert.AreEqual(1, caches.Count());
+                Assert.IsNotNull(caches.First().Item1);
+                Assert.AreEqual(1, caches.First().Item1.Count());
+                Assert.IsNull(caches.First().Item2);
+                callProcess = true;
+                return Task.CompletedTask;
+            };
+            _instance.EnableCache = false;
+            var caches = (List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>)_private.GetField("_caches");
+            await _instance.Process(new Dictionary<string, object>(), null);
+            Assert.IsFalse(callInitCachePipeline);
+            Assert.AreEqual(0, caches.Count);
+            Assert.IsTrue(callProcess);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessIEnumerableOfIReadOnlyDictionaryOfStringObjectISpiderTest0()
+        {
+            bool callInitCachePipeline = false;
+            _instanceShim.InitCachePipeline = () => callInitCachePipeline = true;
+            var caches = (List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>)_private.GetField("_caches");
+            
+            await _instance.Process((IEnumerable<IReadOnlyDictionary<string, object>>)null, null);
+            Assert.IsFalse(callInitCachePipeline);
+            Assert.AreEqual(0, caches.Count);
+
+            await _instance.Process(new List<IReadOnlyDictionary<string, object>>(), null);
+            Assert.IsTrue(callInitCachePipeline);
+            Assert.AreEqual(1, caches.Count);
+            Assert.AreEqual(0, caches[0].Item1.Count());
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessIEnumerableOfIReadOnlyDictionaryOfStringObjectISpiderTest1()
+        {
+            bool callInitCachePipeline = false;
+            _instanceShim.InitCachePipeline = () => callInitCachePipeline = true;
+            var caches = (List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>)_private.GetField("_caches");
+            caches.Add(Tuple.Create<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>(new List<IReadOnlyDictionary<string, object>> { null }, null));
+            await _instance.Process(new List<IReadOnlyDictionary<string, object>> { null }, null);
+            Assert.IsTrue(callInitCachePipeline);
+            Assert.AreEqual(1, caches.Count);
+            Assert.AreEqual(2, caches[0].Item1.Count());
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessIEnumerableOfIReadOnlyDictionaryOfStringObjectISpiderTest2()
+        {
+            bool callInitCachePipeline = false;
+            _instanceShim.InitCachePipeline = () => callInitCachePipeline = true;
+            var caches = (List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>)_private.GetField("_caches");
+            caches.Add(Tuple.Create<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>(null, null));
+            await _instance.Process(new List<IReadOnlyDictionary<string, object>>(), new DotnetSpider.Fakes.StubISpider());
+            Assert.IsTrue(callInitCachePipeline);
+            Assert.AreEqual(2, caches.Count);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessIEnumerableOfIReadOnlyDictionaryOfStringObjectISpiderTest3()
+        {
+            bool callInitCachePipeline = false;
+            _instanceShim.InitCachePipeline = () => callInitCachePipeline = true;
+            bool callProcess = false;
+            _instance.ProcessIEnumerableOfTupleOfIEnumerableOfIReadOnlyDictionaryOfStringObjectISpider = caches =>
+            {
+                Assert.AreEqual(1, caches.Count());
+                Assert.IsNotNull(caches.First().Item1);
+                Assert.AreEqual(1, caches.First().Item1.Count());
+                Assert.IsNull(caches.First().Item2);
+                callProcess = true;
+                return Task.CompletedTask;
+            };
+            _instance.EnableCache = false;
+            var caches = (List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>)_private.GetField("_caches");
+            await _instance.Process(new List<IReadOnlyDictionary<string, object>> { null }, null);
+            Assert.IsFalse(callInitCachePipeline);
+            Assert.AreEqual(0, caches.Count);
+            Assert.IsTrue(callProcess);
+        }
     }
 }
