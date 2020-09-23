@@ -7,14 +7,18 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.QualityTools.Testing.Fakes;
 using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace DotnetSpider.Pipeline.Tests
 {
+    [ExcludeFromCodeCoverage]
     [TestClass()]
     public class BaseCachePipelineTests
     {
         private IDisposable _shimsContext = null;
         Fakes.StubBaseCachePipeline _instance = null;
+        Fakes.ShimBaseCachePipeline _instanceShim = null;
         PrivateObject _private = null;
 
         [TestInitialize]
@@ -25,6 +29,7 @@ namespace DotnetSpider.Pipeline.Tests
             {
                 CallBase = true
             };
+            _instanceShim = new Fakes.ShimBaseCachePipeline(_instance);
             _private = new PrivateObject(_instance, new PrivateType(typeof(BaseCachePipeline)));
         }
 
@@ -32,6 +37,7 @@ namespace DotnetSpider.Pipeline.Tests
         public void Clean()
         {
             _private = null;
+            _instanceShim = null;
             _instance.Dispose();
             _instance = null;
             _shimsContext.Dispose();
@@ -62,7 +68,7 @@ namespace DotnetSpider.Pipeline.Tests
 
         [TestMethod()]
         [Timeout(5000)]
-        public async Task WaitForNextProcess0()
+        public async Task WaitForNextProcessTest0()
         {
             _instance.MaxCacheTime = TimeSpan.FromMilliseconds(10);
             Task wait = (Task)_private.Invoke("WaitForNextProcess", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -73,13 +79,154 @@ namespace DotnetSpider.Pipeline.Tests
 
         [TestMethod()]
         [Timeout(5000)]
-        public async Task WaitForNextProcess1()
+        public async Task WaitForNextProcessTest1()
         {
             _instance.MaxCacheTime = TimeSpan.FromMilliseconds(10);
             Task wait = (Task)_private.Invoke("WaitForNextProcess");
             Assert.IsFalse(wait.IsCompleted);
             await Task.Delay(200);
             Assert.IsTrue(wait.IsCompleted);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessTest0()
+        {
+            bool called = false;
+            _instance.ProcessIEnumerableOfTupleOfIEnumerableOfIReadOnlyDictionaryOfStringObjectISpider = _ =>
+            {
+                called = true;
+                return Task.CompletedTask;
+            };
+            await (Task)_private.Invoke("Process");
+            Assert.IsFalse(called);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessTest1()
+        {
+            IEnumerable<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>> processedItems = null;
+            _instance.ProcessIEnumerableOfTupleOfIEnumerableOfIReadOnlyDictionaryOfStringObjectISpider = c =>
+            {
+                processedItems = c;
+                return Task.CompletedTask;
+            };
+            var expected = new List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>
+            {
+                null
+            };
+            _private.SetField("_caches", expected);
+            await (Task)_private.Invoke("Process");
+            Assert.AreSame(expected, processedItems);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task ProcessTest2()
+        {
+            var expectedException = new Exception();
+            _instance.ProcessIEnumerableOfTupleOfIEnumerableOfIReadOnlyDictionaryOfStringObjectISpider = _ =>
+            {
+                throw expectedException;
+            };
+            var caches = new List<Tuple<IEnumerable<IReadOnlyDictionary<string, object>>, ISpider>>
+            {
+                null
+            };
+            _private.SetField("_caches", caches);
+            await (Task)_private.Invoke("Process");
+
+            string msg = null;
+            Exception actualException = null;
+            _instance.Logger = new log4net.Fakes.StubILog
+            {
+                ErrorObjectException = (o, e) =>
+                {
+                    msg = (string)o;
+                    actualException = e;
+                }
+            };
+            _instance.Name = "test";
+            _private.SetField("_caches", caches);
+            await (Task)_private.Invoke("Process");
+            Assert.AreSame(expectedException, actualException);
+            Assert.AreEqual("test has an exception when exec Process.", msg);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public void RunCachePipelineTest0()
+        {
+            int processCalled = 0;
+            int waitForNextProcessCalled = 0;
+            _instanceShim.Process = async () =>
+            {
+                ++processCalled;
+                await Task.Delay(1);
+            };
+            _instanceShim.WaitForNextProcess = async () =>
+            {
+                ++waitForNextProcessCalled;
+                await Task.Delay(5);
+            };
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(100);
+                _instance.Dispose();
+            });
+            _private.Invoke("RunCachePipeline");
+            Assert.AreEqual(processCalled, waitForNextProcessCalled + 1);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public void RunCachePipelineTest1()
+        {
+            int processCalled = 0;
+            int waitForNextProcessCalled = 0;
+            _instanceShim.Process = async () =>
+            {
+                ++processCalled;
+                await Task.Delay(1);
+            };
+            _instanceShim.WaitForNextProcess = async () =>
+            {
+                ++waitForNextProcessCalled;
+                await Task.Delay(5);
+            };
+            _instance.Dispose();
+            _private.Invoke("RunCachePipeline");
+            Assert.AreEqual(0, waitForNextProcessCalled);
+            Assert.AreEqual(1, processCalled);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task InitCachePipeline0()
+        {
+            bool callRunCachePipeline = false;
+            _instanceShim.RunCachePipeline = () => callRunCachePipeline = true;
+            _private.Invoke("InitCachePipeline");
+            await Task.Delay(100);
+            Assert.IsTrue(callRunCachePipeline);
+
+            callRunCachePipeline = false;
+            _private.Invoke("InitCachePipeline");
+            await Task.Delay(100);
+            Assert.IsFalse(callRunCachePipeline);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task InitCachePipeline1()
+        {
+            bool callRunCachePipeline = false;
+            _instanceShim.RunCachePipeline = () => callRunCachePipeline = true;
+            _instance.Dispose();
+            _private.Invoke("InitCachePipeline");
+            await Task.Delay(100);
+            Assert.IsFalse(callRunCachePipeline);
         }
     }
 }
