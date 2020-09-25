@@ -3,6 +3,7 @@ using DotnetSpider.Downloader;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Net.Http;
 
 namespace DotnetSpider.Downloader.Tests
 {
@@ -91,6 +92,13 @@ namespace DotnetSpider.Downloader.Tests
             Assert.IsFalse(a.Equals(15));
         }
 
+        [TestMethod()]
+        public void EqualsTest6()
+        {
+            var a = new Request();
+            Assert.IsTrue(a.Equals(a));
+        }
+
         #endregion
 
         #region GetHashCode
@@ -146,6 +154,39 @@ namespace DotnetSpider.Downloader.Tests
             Assert.IsTrue(json.Contains("test"));
             Assert.IsTrue(json.Contains("0"));
             Assert.AreEqual(r, Request.FromString(json));
+        }
+
+        [TestMethod()]
+        public void GetUriTest()
+        {
+            Request request = new Request("http://www.baidu.com");
+            Uri uri = request.GetUri();
+            Assert.AreEqual("http://www.baidu.com", uri.OriginalString);
+            Assert.AreNotSame(uri, request.GetUri());
+        }
+
+        [TestMethod()]
+        public void PropertyTest0()
+        {
+            Request request = new Request(null);
+            Assert.AreEqual(HttpMethod.Get, request.Method);
+            request.Method = HttpMethod.Post;
+            Assert.AreEqual(HttpMethod.Post, request.Method);
+        }
+
+        [TestMethod()]
+        public void PropertyTest1()
+        {
+            Request request = new Request(null);
+            Assert.IsNull(request.ContentData);
+            byte[] expectedArray = new byte[2];
+            request.ContentData = expectedArray;
+            Assert.AreSame(expectedArray, request.ContentData);
+            request.Content = "test";
+            Assert.AreNotSame(expectedArray, request.ContentData);
+            CollectionAssert.AreEqual(Encoding.UTF8.GetBytes("test"), request.ContentData);
+            request.EncodingName = "UTF-32";
+            CollectionAssert.AreEqual(Encoding.UTF32.GetBytes("test"), request.ContentData);
         }
     }
 }
