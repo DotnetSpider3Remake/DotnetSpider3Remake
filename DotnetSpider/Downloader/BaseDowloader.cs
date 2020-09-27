@@ -35,7 +35,7 @@ namespace DotnetSpider.Downloader
         }
 
         /// <summary>
-        /// 同步下载链接内容。
+        /// 异步下载链接内容。
         /// 不需要考虑Enter、Leave问题，已经由调用者处理了。
         /// </summary>
         /// <param name="request">链接请求</param>
