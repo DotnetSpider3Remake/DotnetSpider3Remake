@@ -109,6 +109,7 @@ namespace DotnetSpider.Downloader
         /// <summary>
         /// 请求是否成功执行
         /// </summary>
+        [JsonIgnore]
         public bool IsSuccessStatusCode => StatusCode < HttpStatusCode.BadRequest && StatusCode >= HttpStatusCode.OK;
 
         public List<Dictionary<string, string>> SetCookies { get; set; }

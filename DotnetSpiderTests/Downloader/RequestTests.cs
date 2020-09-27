@@ -172,6 +172,9 @@ namespace DotnetSpider.Downloader.Tests
             Assert.AreEqual(HttpMethod.Get, request.Method);
             request.Method = HttpMethod.Post;
             Assert.AreEqual(HttpMethod.Post, request.Method);
+            Assert.IsNotNull(request.Headers);
+            request.Headers = null;
+            Assert.IsNull(request.Headers);
         }
 
         [TestMethod()]
