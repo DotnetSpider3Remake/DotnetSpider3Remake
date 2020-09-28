@@ -1,8 +1,12 @@
 ﻿using DotnetSpider.Downloader;
+using DotnetSpider.Proxy.Helper;
 using Microsoft.QualityTools.Testing.Fakes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
+using System.Net.Http;
+using System.Web.UI.WebControls.Adapters;
 
 namespace DotnetSpider.Downloader.Tests
 {
@@ -44,6 +48,50 @@ namespace DotnetSpider.Downloader.Tests
             Assert.IsNotNull(_instance.HttpClientGetter);
             _instance.HttpClientGetter = null;
             Assert.IsNull(_instance.HttpClientGetter);
+        }
+
+        [TestMethod]
+        public void CreateHttpMessageHandlerTest0()
+        {
+            var result = (Tuple<HttpMessageHandler, DynamicProxy>)_private.Invoke("CreateHttpMessageHandler");
+            Assert.IsInstanceOfType(result.Item1, typeof(HttpClientHandler));
+            HttpClientHandler handler = (HttpClientHandler)result.Item1;
+            Assert.IsTrue(handler.UseProxy);
+            Assert.IsFalse(handler.UseDefaultCredentials);
+            Assert.AreSame(result.Item2, handler.Proxy);
+        }
+
+        [TestMethod]
+        public void CreateHttpMessageHandlerTest1()
+        {
+            _instance.AllowAutoRedirect = false;
+            HttpClientHandler handler = (HttpClientHandler)((Tuple<HttpMessageHandler, DynamicProxy>)_private.Invoke("CreateHttpMessageHandler")).Item1;
+            Assert.IsFalse(handler.AllowAutoRedirect);
+
+            _instance.AllowAutoRedirect = true;
+            handler = (HttpClientHandler)((Tuple<HttpMessageHandler, DynamicProxy>)_private.Invoke("CreateHttpMessageHandler")).Item1;
+            Assert.IsTrue(handler.AllowAutoRedirect);
+        }
+
+        [TestMethod]
+        public void GetHttpClientTest()
+        {
+            using HttpClient client = new HttpClient();
+            _instance.HttpClientGetter = _ => client;
+            bool callCreateHttpMessageHandler = false;
+            _instanceShim.CreateHttpMessageHandler = () =>
+            {
+                callCreateHttpMessageHandler = true;
+                return new Tuple<HttpMessageHandler, DynamicProxy>(null, new DynamicProxy());
+            };
+
+            HttpClient actual = (HttpClient)_private.Invoke("GetHttpClient", (Request)null, (IWebProxy)null);
+            Assert.AreSame(client, actual);
+            Assert.IsTrue(callCreateHttpMessageHandler);
+
+            callCreateHttpMessageHandler = false;
+            _private.Invoke("GetHttpClient", (Request)null, (IWebProxy)null);
+            Assert.IsFalse(callCreateHttpMessageHandler);
         }
     }
 }

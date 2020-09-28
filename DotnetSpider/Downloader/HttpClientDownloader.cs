@@ -174,7 +174,7 @@ namespace DotnetSpider.Downloader
         /// </summary>
         /// <param name="request">HTTP请求</param>
         /// <returns>HTTP请求消息</returns>
-        private HttpRequestMessage GenerateHttpRequestMessage(Request request)
+        private static HttpRequestMessage GenerateHttpRequestMessage(Request request)
         {
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(request.Method, request.Url);
             // Headers 的优先级低于 Request.UserAgent 这种特定设置, 因此先加载所有 Headers, 再使用 Request.UserAgent 覆盖
