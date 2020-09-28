@@ -58,7 +58,7 @@ namespace DotnetSpider.Downloader
         public Func<HttpMessageHandler, HttpClient> HttpClientGetter { get; set; } = handler => new HttpClient(handler);
         #endregion
 
-
+        #region 实现抽象函数
         protected override async Task<Response> Downloading(Request request, IWebProxy proxy = null)
         {
             Response response = new Response(request)
@@ -118,7 +118,9 @@ namespace DotnetSpider.Downloader
                 _httpClients.Clear();
             }
         }
+        #endregion
 
+        #region 可以在派生类中重新实现的函数
         /// <summary>
         /// 获取当前线程使用的<see cref="HttpClient"/>实例。
         /// 默认只为每个线程各生成一个<see cref="HttpClient"/>实例。
@@ -148,6 +150,7 @@ namespace DotnetSpider.Downloader
 
         /// <summary>
         /// 创建HTTP请求需要的<see cref="HttpMessageHandler"/>和<see cref="DynamicProxy"/>，并关联两者。
+        /// <see cref="HttpMessageHandler"/>中定义了HTTP请求的一些基本动作。
         /// </summary>
         /// <returns>新的已关联的<see cref="HttpMessageHandler"/>和<see cref="DynamicProxy"/>。</returns>
         protected virtual Tuple<HttpMessageHandler, DynamicProxy> CreateHttpMessageHandler()
@@ -155,14 +158,17 @@ namespace DotnetSpider.Downloader
             DynamicProxy proxy = new DynamicProxy();
             HttpClientHandler handler = new HttpClientHandler
             {
-                UseCookies = false,
-                UseDefaultCredentials = false,
-                UseProxy = true,
-                Proxy = proxy
+                UseCookies = false,//Cookies直接由Request指定，不使用自带的Cookies系统。
+                UseDefaultCredentials = false,//不使用默认身份认证，避免对代理的使用造成影响。
+                UseProxy = true,//使用DynamicProxy作为代理，具体使用代理还是直连由DynamicProxy决定。
+                Proxy = proxy,
+                AllowAutoRedirect = AllowAutoRedirect//同步自动跳转设置
             };
             return new Tuple<HttpMessageHandler, DynamicProxy>(handler, proxy);
         }
+        #endregion
 
+        #region 构造请求
         /// <summary>
         /// 根据<see cref="Request"/>生成<see cref="HttpRequestMessage"/>。
         /// </summary>
@@ -308,7 +314,9 @@ namespace DotnetSpider.Downloader
 
             return bytes;
         }
+        #endregion
 
+        #region 解析响应
         /// <summary>
         /// 追加HTTP响应头
         /// </summary>
@@ -415,5 +423,6 @@ namespace DotnetSpider.Downloader
                 }
             }
         }
+        #endregion
     }
 }
