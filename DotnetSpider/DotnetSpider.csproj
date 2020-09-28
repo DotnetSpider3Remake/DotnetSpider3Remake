@@ -15,6 +15,7 @@ It is a remake of DotnetSpider 3.x.</Description>
     <Version>0.0.1</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageTags>DotnetSpider;crawler;dotnet core</PackageTags>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

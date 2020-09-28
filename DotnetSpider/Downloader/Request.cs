@@ -42,16 +42,27 @@ namespace DotnetSpider.Downloader
         public string ContentType { get; set; }
 
         /// <summary>
-        /// Headers
+        /// Http请求头。
+        /// 如果"X-Requested-With"设置为<see cref="null"/>，将不会在Http连接时使用"X-Requested-With"头。（即使<see cref="ContentData"/>不为空）
         /// </summary>
-        public Dictionary<string, object> Headers { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> Headers { get; } = new Dictionary<string, object>();
 
         #endregion
 
+        private string _encodingName = null;
+        private bool _encodingNameChanged = false;
         /// <summary>
         /// 字符编码，默认为UTF-8
         /// </summary>
-        public string EncodingName { get; set; }
+        public string EncodingName 
+        { 
+            get => _encodingName;
+            set
+            {
+                _encodingName = value;
+                _encodingNameChanged = true;
+            }
+        }
 
         /// <summary>
         /// 请求链接的方法
@@ -63,10 +74,20 @@ namespace DotnetSpider.Downloader
         /// </summary>
         public Dictionary<string, object> Properties { get; } = new Dictionary<string, object>();
 
+        private string _content = null;
+        private bool _contentChanged = false;
         /// <summary>
         /// 请求此链接时需要POST/PUT的数据，文本格式。
         /// </summary>
-        public string Content { get; set; }
+        public string Content 
+        { 
+            get => _content;
+            set
+            {
+                _content = value;
+                _contentChanged = true;
+            } 
+        }
 
         private byte[] _contentData = null;
         /// <summary>
@@ -79,15 +100,16 @@ namespace DotnetSpider.Downloader
         {
             get
             {
-                if (Content != null)
+                if (_contentChanged || 
+                    (_encodingNameChanged && _content != null))
                 {
                     var encoding = string.IsNullOrEmpty(EncodingName) ? Encoding.UTF8 : Encoding.GetEncoding(EncodingName);
-                    return encoding.GetBytes(Content);
+                    _contentData = (_content == null) ? null : encoding.GetBytes(_content);
+                    _contentChanged = false;
+                    _encodingNameChanged = false;
                 }
-                else
-                {
-                    return _contentData;
-                }
+
+                return _contentData;
             }
             set
             {
@@ -108,7 +130,7 @@ namespace DotnetSpider.Downloader
         /// <summary>
         /// Cookies
         /// </summary>
-        public Dictionary<string, string> Cookies { get; set; }
+        public Dictionary<string, string> Cookies { get; } = new Dictionary<string, string>();
 
         /// <summary>
         /// 构造方法
@@ -183,7 +205,8 @@ namespace DotnetSpider.Downloader
                 Comparaor.AreEquivalent(a.Cookies, b.Cookies) == false ||
                 Equals(a.Origin, b.Origin) == false ||
                 Equals(a.Referer, b.Referer) == false ||
-                Equals(a.UserAgent, b.UserAgent) == false)
+                Equals(a.UserAgent, b.UserAgent) == false ||
+                Comparaor.AreEquivalent(a.Properties, b.Properties) == false)
             {
                 return false;
             }

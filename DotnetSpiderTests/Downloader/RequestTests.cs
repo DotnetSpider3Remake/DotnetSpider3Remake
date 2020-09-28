@@ -66,7 +66,7 @@ namespace DotnetSpider.Downloader.Tests
             var a = new Request();
             var b = new Request();
             b.Properties.Add("test", null);
-            Assert.IsTrue(a.Equals(b));
+            Assert.IsFalse(a.Equals(b));
         }
 
         [TestMethod()]
@@ -147,7 +147,7 @@ namespace DotnetSpider.Downloader.Tests
         {
             var r = new Request("https://www.baidu.com");
             r.Origin = "https://www.google.com";
-            r.Properties.Add("test", 0);
+            r.Properties.Add("test", (long)0);
             string json = r.ToString();
             Assert.IsTrue(json.Contains("https://www.baidu.com"));
             Assert.IsTrue(json.Contains("https://www.google.com"));
@@ -173,22 +173,52 @@ namespace DotnetSpider.Downloader.Tests
             request.Method = HttpMethod.Post;
             Assert.AreEqual(HttpMethod.Post, request.Method);
             Assert.IsNotNull(request.Headers);
-            request.Headers = null;
-            Assert.IsNull(request.Headers);
         }
 
         [TestMethod()]
-        public void PropertyTest1()
+        public void ContentDataTest0()
         {
             Request request = new Request(null);
             Assert.IsNull(request.ContentData);
             byte[] expectedArray = new byte[2];
             request.ContentData = expectedArray;
             Assert.AreSame(expectedArray, request.ContentData);
-            request.Content = "test";
-            Assert.AreNotSame(expectedArray, request.ContentData);
-            CollectionAssert.AreEqual(Encoding.UTF8.GetBytes("test"), request.ContentData);
+        }
+
+        [TestMethod()]
+        public void ContentDataTest1()
+        {
+            Request request = new Request(null);
+            Assert.IsNull(request.ContentData);
+            byte[] expectedArray = new byte[2];
+            request.ContentData = expectedArray;
             request.EncodingName = "UTF-32";
+            Assert.AreSame(expectedArray, request.ContentData);
+        }
+
+        [TestMethod()]
+        public void ContentDataTest2()
+        {
+            Request request = new Request(null);
+            Assert.IsNull(request.ContentData);
+            byte[] unexpectedArray = new byte[2];
+            request.ContentData = unexpectedArray;
+            request.Content = "test";
+            Assert.AreNotSame(unexpectedArray, request.ContentData);
+            var actual = request.ContentData;
+            CollectionAssert.AreEqual(Encoding.UTF8.GetBytes("test"), actual);
+            Assert.AreSame(actual, request.ContentData);
+        }
+
+        [TestMethod()]
+        public void ContentDataTest3()
+        {
+            Request request = new Request(null);
+            Assert.IsNull(request.ContentData);
+            request.Content = "test";
+            var actual = request.ContentData;
+            request.EncodingName = "UTF-32";
+            CollectionAssert.AreNotEqual(actual, request.ContentData);
             CollectionAssert.AreEqual(Encoding.UTF32.GetBytes("test"), request.ContentData);
         }
     }

@@ -67,15 +67,6 @@ namespace DotnetSpider.Downloader.Tests
 
             response.IsDownloaderTimeout = false;
             Assert.IsFalse(response.IsDownloaderTimeout);
-
-            List<Dictionary<string, string>> cookies = new List<Dictionary<string, string>>();
-            response.SetCookies = cookies;
-            Assert.AreSame(cookies, response.SetCookies);
-
-            Dictionary<string, HashSet<string>> headers = new Dictionary<string, HashSet<string>>();
-            Assert.IsNull(response.Headers);
-            response.Headers = headers;
-            Assert.AreSame(headers, response.Headers);
         }
 
         [TestMethod]

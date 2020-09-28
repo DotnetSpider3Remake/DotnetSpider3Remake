@@ -13,10 +13,14 @@ using System.Threading.Tasks;
 
 namespace DotnetSpider.Downloader
 {
+    /// <summary>
+    /// 使用<see cref="HttpClient"/>实现的<see cref="IDownloader"/>，具有基本的下载功能。
+    /// </summary>
     public class HttpClientDownloader : BaseDowloader
     {
+        #region 局部变量
         /// <summary>
-        /// <see cref="HttpClient"/>实例集合。
+        /// <see cref="HttpClient"/>实例集合。KEY为线程号。
         /// 在调用<see cref="IDisposable.Dispose"/>时，会自动释放所有<see cref="HttpClient"/>。
         /// </summary>
         protected readonly Dictionary<int, Tuple<HttpClient, DynamicProxy>> _httpClients = new Dictionary<int, Tuple<HttpClient, DynamicProxy>>();
@@ -24,16 +28,15 @@ namespace DotnetSpider.Downloader
         /// <see cref="_httpClients"/>的读写锁。
         /// </summary>
         protected readonly object _httpClientsLocker = new object();
+        #endregion
 
+        #region 公共属性
         /// <summary>
-        /// What mediatype should not be treated as file to download.
-        /// </summary>
-        /// <summary xml:lang="zh-CN">
         /// 定义哪些类型的内容不需要当成文件下载，即文本格式。
+        /// 如果<see cref="Response.ContentType"/>为空，也会当作文本格式处理。
         /// </summary>
         public HashSet<string> ExcludeMediaTypes { get; } = new HashSet<string>
         {
-            "",
             "text/html",
             "text/plain",
             "text/richtext",
@@ -53,6 +56,7 @@ namespace DotnetSpider.Downloader
         /// 构造HttpClient函数，一般每个线程中只调用一次。
         /// </summary>
         public Func<HttpMessageHandler, HttpClient> HttpClientGetter { get; set; } = handler => new HttpClient(handler);
+        #endregion
 
 
         protected override async Task<Response> Downloading(Request request, IWebProxy proxy = null)
@@ -65,66 +69,28 @@ namespace DotnetSpider.Downloader
             try
             {
                 var httpClient = GetHttpClient(request, proxy);
-                using (var message = GenerateHttpRequestMessage(request))
+                using var message = GenerateHttpRequestMessage(request);
+                var cts = new CancellationTokenSource();
+                cts.CancelAfter(Timeout);
+                try
                 {
-                    var cts = new CancellationTokenSource();
-                    cts.CancelAfter(Timeout);
-                    try
+                    using var httpResponse = await httpClient.SendAsync(message, cts.Token);
+                    await GenerateResponse(response, httpResponse);
+                }
+                catch (TaskCanceledException e)
+                {
+                    if (e.CancellationToken == cts.Token)
                     {
-                        using (var httpResponse = await httpClient.SendAsync(message, cts.Token))
-                        {
-                            response.StatusCode = httpResponse.StatusCode;
-                            response.Headers = GetResponseHeaders(httpResponse.Headers);
-                            response.SetCookies = GetSetCookies(response.Headers);
-                            response.TargetUrl = httpResponse.RequestMessage.RequestUri.AbsoluteUri;
-                            if (httpResponse.Content != null)
-                            {
-                                AppendContentHeaders(response.Headers, httpResponse.Content.Headers);
-                                response.ContentType = httpResponse.Content.Headers?.ContentType?.ToString() ?? string.Empty;
-                                bool isText = false;
-                                if (response.ContentType == string.Empty)
-                                {
-                                    isText = true;
-                                }
-                                else
-                                {
-                                    string[] contentTypes = response.ContentType.Split(';');
-                                    foreach (var contentType in contentTypes)
-                                    {
-                                        if (contentType != string.Empty && ExcludeMediaTypes.Contains(contentType))
-                                        {
-                                            isText = true;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (isText)
-                                {
-                                    response.Content = await httpResponse.Content.ReadAsStringAsync();
-                                }
-                                else
-                                {
-                                    response.Content = await httpResponse.Content.ReadAsByteArrayAsync();
-                                }
-                            }
-                        }
+                        response.StatusCode = HttpStatusCode.RequestTimeout;
+                        response.IsDownloaderTimeout = true;
                     }
-                    catch (TaskCanceledException e)
+                    else if (e.InnerException is IOException)
                     {
-                        if (e.CancellationToken == cts.Token)
-                        {
-                            response.StatusCode = HttpStatusCode.RequestTimeout;
-                            response.IsDownloaderTimeout = true;
-                        }
-                        else if (e.InnerException is IOException)
-                        {
-                            Logger?.Warn($"HTTP request failed：\"{ e.InnerException.Message }\"\n{ request }");
-                        }
-                        else
-                        {
-                            throw;
-                        }
+                        Logger?.Warn($"HTTP request failed：\"{ e.InnerException.Message }\"\n{ request }");
+                    }
+                    else
+                    {
+                        throw;
                     }
                 }
             }
@@ -136,6 +102,9 @@ namespace DotnetSpider.Downloader
             return response;
         }
 
+        /// <summary>
+        /// 清理所有的<see cref="HttpClient"/>。
+        /// </summary>
         protected override void DisposeOthers()
         {
             base.DisposeOthers();
@@ -177,6 +146,10 @@ namespace DotnetSpider.Downloader
             }
         }
 
+        /// <summary>
+        /// 创建HTTP请求需要的<see cref="HttpMessageHandler"/>和<see cref="DynamicProxy"/>，并关联两者。
+        /// </summary>
+        /// <returns>新的已关联的<see cref="HttpMessageHandler"/>和<see cref="DynamicProxy"/>。</returns>
         protected virtual Tuple<HttpMessageHandler, DynamicProxy> CreateHttpMessageHandler()
         {
             DynamicProxy proxy = new DynamicProxy();
@@ -190,95 +163,123 @@ namespace DotnetSpider.Downloader
             return new Tuple<HttpMessageHandler, DynamicProxy>(handler, proxy);
         }
 
+        /// <summary>
+        /// 根据<see cref="Request"/>生成<see cref="HttpRequestMessage"/>。
+        /// </summary>
+        /// <param name="request">HTTP请求</param>
+        /// <returns>HTTP请求消息</returns>
         private HttpRequestMessage GenerateHttpRequestMessage(Request request)
         {
             HttpRequestMessage httpRequestMessage = new HttpRequestMessage(request.Method, request.Url);
-
             // Headers 的优先级低于 Request.UserAgent 这种特定设置, 因此先加载所有 Headers, 再使用 Request.UserAgent 覆盖
             foreach (var header in request.Headers)
             {
                 httpRequestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value?.ToString());
             }
 
-            if (!string.IsNullOrWhiteSpace(request.UserAgent))
-            {
-                var header = "User-Agent";
-                httpRequestMessage.Headers.Remove(header);
-                httpRequestMessage.Headers.TryAddWithoutValidation(header, request.UserAgent);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.Referer))
-            {
-                var header = "Referer";
-                httpRequestMessage.Headers.Remove(header);
-                httpRequestMessage.Headers.TryAddWithoutValidation(header, request.Referer);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.Origin))
-            {
-                var header = "Origin";
-                httpRequestMessage.Headers.Remove(header);
-                httpRequestMessage.Headers.TryAddWithoutValidation(header, request.Origin);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.Accept))
-            {
-                var header = "Accept";
-                httpRequestMessage.Headers.Remove(header);
-                httpRequestMessage.Headers.TryAddWithoutValidation(header, request.Accept);
-            }
-
-            if (request.Cookies != null && request.Cookies.Count > 0)
-            {
-                StringBuilder builder = new StringBuilder();
-                foreach (var i in request.Cookies)
-                {
-                    builder.Append(i.Key);
-                    builder.Append(":");
-                    builder.Append(i.Value);
-                    builder.Append("; ");
-                }
-
-                builder.Remove(builder.Length - 2, 2);
-                var header = "Cookie";
-                httpRequestMessage.Headers.Remove(header);
-                httpRequestMessage.Headers.TryAddWithoutValidation(header, builder.ToString());
-            }
-
-            //添加CONTENT，可以为空字符串。
-            //理论上所有类型的请求都可以有CONTENT，但大部分人只用在POST/PUT时使用。
-            if (request.ContentData != null)
-            {
-                var bytes = CompressContent(request);
-                httpRequestMessage.Content = new ByteArrayContent(bytes);
-
-                if (!string.IsNullOrWhiteSpace(request.ContentType))
-                {
-                    var header = "Content-Type";
-                    httpRequestMessage.Content.Headers.Remove(header);
-                    httpRequestMessage.Content.Headers.TryAddWithoutValidation(header, request.ContentType);
-                }
-
-                var xRequestedWithHeader = "X-Requested-With";
-                if (request.Headers.ContainsKey(xRequestedWithHeader) &&
-                    request.Headers[xRequestedWithHeader].ToString() == "NULL")
-                {
-                    httpRequestMessage.Content.Headers.Remove(xRequestedWithHeader);
-                }
-                else
-                {
-                    if (!httpRequestMessage.Content.Headers.Contains(xRequestedWithHeader) &&
-                        !httpRequestMessage.Headers.Contains(xRequestedWithHeader))
-                    {
-                        httpRequestMessage.Content.Headers.TryAddWithoutValidation(xRequestedWithHeader, "XMLHttpRequest");
-                    }
-                }
-            }
-
+            SetExtraHeaders(httpRequestMessage.Headers, request);
+            SetContent(httpRequestMessage, request);
             return httpRequestMessage;
         }
 
-        private byte[] CompressContent(Request request)
+        /// <summary>
+        /// 添加CONTENT，可以为空字符串。
+        /// 理论上所有类型的请求都可以有CONTENT，但大部分人只用在POST/PUT时使用。
+        /// </summary>
+        /// <param name="httpRequestMessage"></param>
+        /// <param name="request"></param>
+        private static void SetContent(HttpRequestMessage httpRequestMessage, Request request)
+        {
+            if (request.ContentData == null)
+            {
+                return;
+            }
+
+            var bytes = CompressContent(request);
+            httpRequestMessage.Content = new ByteArrayContent(bytes);
+            SetHeader(httpRequestMessage.Content.Headers, "Content-Type", request.ContentType);
+
+            string xRequestedWithHeader = "X-Requested-With";
+            if (request.Headers.TryGetValue(xRequestedWithHeader, out object xRequestedWithValue) &&
+                xRequestedWithValue is null)
+            {
+                httpRequestMessage.Content.Headers.Remove(xRequestedWithHeader);
+            }
+            else if (!httpRequestMessage.Content.Headers.Contains(xRequestedWithHeader) &&
+                !httpRequestMessage.Headers.Contains(xRequestedWithHeader))
+            {
+                httpRequestMessage.Content.Headers.TryAddWithoutValidation(xRequestedWithHeader, "XMLHttpRequest");
+            }
+        }
+
+        /// <summary>
+        /// 设置额外的HTTP请求头。
+        /// </summary>
+        /// <param name="headers">HTTP请求头集合</param>
+        /// <param name="request">HTTP请求</param>
+        private static void SetExtraHeaders(HttpRequestHeaders headers, Request request)
+        {
+            SetHeader(headers, "User-Agent", request.UserAgent);
+            SetHeader(headers, "Referer", request.Referer);
+            SetHeader(headers, "Origin", request.Origin);
+            SetHeader(headers, "Accept", request.Accept);
+            SetCookies(headers, request);
+        }
+
+        /// <summary>
+        /// 设置HTTP请求的Cookies
+        /// </summary>
+        /// <param name="headers">HTTP请求头集合</param>
+        /// <param name="request">HTTP请求</param>
+        private static void SetCookies(HttpRequestHeaders headers, Request request)
+        {
+            if (request.Cookies != null && request.Cookies.Count > 0)
+            {
+                StringBuilder builder = new StringBuilder();
+                bool first = true;
+                foreach (var i in request.Cookies)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        builder.Append("; ");
+                    }
+
+                    builder.Append(i.Key);
+                    builder.Append(":");
+                    builder.Append(i.Value);
+                }
+
+                SetHeader(headers, "Cookie", builder.ToString());
+            }
+        }
+
+        /// <summary>
+        /// 设置HTTP头。
+        /// </summary>
+        /// <param name="headers">HTTP头集合</param>
+        /// <param name="key">头的索引</param>
+        /// <param name="value">头的值</param>
+        private static void SetHeader(HttpHeaders headers, string key, string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return;
+            }
+
+            headers.Remove(key);
+            headers.TryAddWithoutValidation(key, value);
+        }
+
+        /// <summary>
+        /// 压缩<seealso cref="Request.ContentData"/>字段。
+        /// </summary>
+        /// <param name="request">HTTP请求</param>
+        /// <returns>压缩后的字节数组</returns>
+        private static byte[] CompressContent(Request request)
         {
             var bytes = request.ContentData;
             switch (request.CompressMode)
@@ -293,12 +294,10 @@ namespace DotnetSpider.Downloader
                 case CompressMode.Gzip:
                     using (MemoryStream ms = new MemoryStream())
                     {
-                        using (GZipStream compressedzipStream = new GZipStream(ms, CompressionMode.Compress))
-                        {
-                            compressedzipStream.Write(bytes, 0, bytes.Length);
-                            compressedzipStream.Close();
-                            bytes = ms.ToArray();
-                        }
+                        using GZipStream compressedzipStream = new GZipStream(ms, CompressionMode.Compress);
+                        compressedzipStream.Write(bytes, 0, bytes.Length);
+                        compressedzipStream.Close();
+                        bytes = ms.ToArray();
                     }
 
                     break;
@@ -310,34 +309,13 @@ namespace DotnetSpider.Downloader
             return bytes;
         }
 
-        private Dictionary<string, HashSet<string>> GetResponseHeaders(HttpResponseHeaders headers)
+        /// <summary>
+        /// 追加HTTP响应头
+        /// </summary>
+        /// <param name="headers">目的集合</param>
+        /// <param name="contentHeaders">来源</param>
+        private static void AppendResponseHeaders(Dictionary<string, HashSet<string>> headers, HttpHeaders contentHeaders)
         {
-            Dictionary<string, HashSet<string>> res = new Dictionary<string, HashSet<string>>();
-            if (headers != null)
-            {
-                foreach (var header in headers)
-                {
-                    if (res.ContainsKey(header.Key))
-                    {
-                        res[header.Key].UnionWith(header.Value);
-                    }
-                    else 
-                    {
-                        res.Add(header.Key, new HashSet<string>(header.Value));
-                    }
-                }
-            }
-
-            return res;
-        }
-
-        private void AppendContentHeaders(Dictionary<string, HashSet<string>> headers, HttpContentHeaders contentHeaders)
-        {
-            if (contentHeaders == null)
-            {
-                return;
-            }
-
             foreach (var header in contentHeaders)
             {
                 if (headers.ContainsKey(header.Key))
@@ -351,9 +329,13 @@ namespace DotnetSpider.Downloader
             }
         }
 
-        private List<Dictionary<string, string>> GetSetCookies(Dictionary<string, HashSet<string>> header)
+        /// <summary>
+        /// 增加HTTP响应头中的"Set-Cookie"字段。
+        /// </summary>
+        /// <param name="cookies">Set-Cookie"字段集合</param>
+        /// <param name="header">HTTP响应头</param>
+        private static void AppendSetCookies(List<Dictionary<string, string>> cookies, Dictionary<string, HashSet<string>> header)
         {
-            List<Dictionary<string, string>> cookies = new List<Dictionary<string, string>>();
             if (header.ContainsKey("Set-Cookie"))
             {
                 foreach (var i in header["Set-Cookie"])
@@ -377,8 +359,61 @@ namespace DotnetSpider.Downloader
                     }
                 }
             }
+        }
 
-            return cookies;
+        /// <summary>
+        /// 判断响应是否为文本类型。
+        /// </summary>
+        /// <param name="contentType"><see cref="Response.ContentType"/></param>
+        /// <returns>是否为文本类型</returns>
+        private bool IsTextResponse(string contentType)
+        {
+            bool isText = false;
+            if (contentType == string.Empty)
+            {
+                isText = true;
+            }
+            else
+            {
+                string[] contentTypes = contentType.Split(';');
+                foreach (var i in contentTypes)
+                {
+                    if (ExcludeMediaTypes.Contains(i))
+                    {
+                        isText = true;
+                        break;
+                    }
+                }
+            }
+
+            return isText;
+        }
+
+        /// <summary>
+        /// 生成<see cref="Response"/>。
+        /// </summary>
+        /// <param name="response">目的响应</param>
+        /// <param name="httpResponse">来源响应</param>
+        /// <returns></returns>
+        private async Task GenerateResponse(Response response, HttpResponseMessage httpResponse)
+        {
+            response.StatusCode = httpResponse.StatusCode;
+            AppendResponseHeaders(response.Headers, httpResponse.Headers);
+            AppendSetCookies(response.SetCookies, response.Headers);
+            response.TargetUrl = httpResponse.RequestMessage.RequestUri.AbsoluteUri;
+            if (httpResponse.Content != null)
+            {
+                AppendResponseHeaders(response.Headers, httpResponse.Content.Headers);
+                response.ContentType = httpResponse.Content.Headers?.ContentType?.ToString() ?? string.Empty;
+                if (IsTextResponse(response.ContentType))
+                {
+                    response.Content = await httpResponse.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    response.Content = await httpResponse.Content.ReadAsByteArrayAsync();
+                }
+            }
         }
     }
 }

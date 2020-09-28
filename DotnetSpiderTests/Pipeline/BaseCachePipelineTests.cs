@@ -70,7 +70,7 @@ namespace DotnetSpider.Pipeline.Tests
         [Timeout(5000)]
         public async Task WaitForNextProcessTest0()
         {
-            _instance.MaxCacheTime = TimeSpan.FromMilliseconds(10);
+            _instance.MaxCacheTime = TimeSpan.FromMilliseconds(100);
             Task wait = (Task)_private.Invoke("WaitForNextProcess", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.IsFalse(wait.IsCompleted);
             _instance.Dispose();

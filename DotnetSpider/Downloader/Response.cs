@@ -112,9 +112,9 @@ namespace DotnetSpider.Downloader
         [JsonIgnore]
         public bool IsSuccessStatusCode => StatusCode < HttpStatusCode.BadRequest && StatusCode >= HttpStatusCode.OK;
 
-        public List<Dictionary<string, string>> SetCookies { get; set; }
+        public List<Dictionary<string, string>> SetCookies { get; } = new List<Dictionary<string, string>>();
 
-        public Dictionary<string, HashSet<string>> Headers { get; set; }
+        public Dictionary<string, HashSet<string>> Headers { get; } = new Dictionary<string, HashSet<string>>();
 
         public override string ToString()
         {
