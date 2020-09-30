@@ -8,32 +8,6 @@ using System.Xml;
 
 namespace GetBaiduLinks
 {
-    class ResponseProcessor : BasePageProcessor
-    {
-        protected override ProcessorResult ProcessSync(Response page)
-        {
-            ProcessorResult result = new ProcessorResult(page.Request);
-            try
-            {
-                var links = page.HtmlNode?.SelectNodes("//a[@href]");
-                if (links != null)
-                {
-                    foreach (var link in links)
-                    {
-                        result.AddTargetRequest(link.Attributes["href"].Value);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger?.Error($"Can not process page :\n{ page }\nExpection:\n{ e }");
-                result.SkipTargetRequests = true;
-            }
-
-            return result;
-        }
-    }
-
     class Program
     {
         static void Main(string[] args)
@@ -45,14 +19,36 @@ namespace GetBaiduLinks
                 ConditionOfStop = s => s.Finished >= 100
             };
 
-            spider.PageProcessors.Add(new ResponseProcessor()
+            spider.PageProcessors.Add(new SimplePageProcessor()
             {
                 Name = "processor",
-                Logger = LoggerCreator.GetLogger("processor")
+                Logger = LoggerCreator.GetLogger("processor"),
+                Processor = (that, page) =>
+                {
+                    ProcessorResult result = new ProcessorResult(page.Request);
+                    try
+                    {
+                        var links = page.HtmlNode?.SelectNodes("//a[@href]");
+                        if (links != null)
+                        {
+                            foreach (var link in links)
+                            {
+                                result.AddTargetRequest(link.Attributes["href"].Value);
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        that.Logger?.Error($"Can not process page :\n{ page }\nExpection:\n{ e }");
+                        result.SkipTargetRequests = true;
+                    }
+
+                    return result;
+                }
             });
             spider.Pipelines.Add(new ConsolePipeline());
             spider.Scheduler.TraverseStrategy = DotnetSpider.Scheduler.TraverseStrategy.BFS;
-            spider.Scheduler.Push(new Request("https://www.baidu.com/"));
+            spider.Scheduler.Push(new Request("https://www.baidu.com"));
             spider.Run();
         }
     }

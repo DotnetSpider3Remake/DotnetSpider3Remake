@@ -18,6 +18,11 @@ namespace DotnetSpider.Downloader
     /// </summary>
     public class HttpClientDownloader : BaseDowloader
     {
+        static HttpClientDownloader()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        }
+
         #region 局部变量
         /// <summary>
         /// <see cref="HttpClient"/>实例集合。KEY为线程号。

@@ -1,4 +1,4 @@
-﻿using DotnetSpider.Downloader;
+﻿using DotnetSpider.Downloader.Fakes;
 using DotnetSpider.Proxy.Helper;
 using Microsoft.QualityTools.Testing.Fakes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -15,19 +15,19 @@ namespace DotnetSpider.Downloader.Tests
     public class HttpClientDownloaderTest
     {
         private IDisposable _shimsContext = null;
-        private DotnetSpider.Downloader.Fakes.StubHttpClientDownloader _instance = null;
-        private DotnetSpider.Downloader.Fakes.ShimHttpClientDownloader _instanceShim = null;
+        private StubHttpClientDownloader _instance = null;
+        private ShimHttpClientDownloader _instanceShim = null;
         private PrivateObject _private = null;
 
         [TestInitialize]
         public void Init()
         {
             _shimsContext = ShimsContext.Create();
-            _instance = new DotnetSpider.Downloader.Fakes.StubHttpClientDownloader
+            _instance = new StubHttpClientDownloader
             {
                 CallBase = true
             };
-            _instanceShim = new DotnetSpider.Downloader.Fakes.ShimHttpClientDownloader(_instance);
+            _instanceShim = new ShimHttpClientDownloader(_instance);
             _private = new PrivateObject(_instance, new PrivateType(typeof(HttpClientDownloader)));
         }
 
