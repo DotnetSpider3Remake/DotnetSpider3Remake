@@ -40,5 +40,13 @@ namespace DotnetSpider.Common.Tests
             int actual = HashCode.GetHashCode(HashCode.BeginCode, new Dictionary<int, int>());
             Assert.AreEqual(expected, actual);
         }
+
+        [TestMethod()]
+        public void GetHashCodeTest4()
+        {
+            int expected = 84696351;
+            int actual = HashCode.GetHashCode(HashCode.BeginCode, (IDictionary<int, int>)null);
+            Assert.AreEqual(expected, actual);
+        }
     }
 }
