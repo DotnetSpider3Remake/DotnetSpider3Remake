@@ -197,8 +197,8 @@ namespace DotnetSpider.Downloader
         /// 添加CONTENT，可以为空字符串。
         /// 理论上所有类型的请求都可以有CONTENT，但大部分人只用在POST/PUT时使用。
         /// </summary>
-        /// <param name="httpRequestMessage"></param>
-        /// <param name="request"></param>
+        /// <param name="httpRequestMessage">HTTP请求消息</param>
+        /// <param name="request">HTTP请求</param>
         private static void SetContent(HttpRequestMessage httpRequestMessage, Request request)
         {
             if (request.ContentData == null)

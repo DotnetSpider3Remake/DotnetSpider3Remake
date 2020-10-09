@@ -11,6 +11,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Web.UI.WebControls.Adapters;
 
 namespace DotnetSpider.Downloader.Tests
@@ -19,6 +20,7 @@ namespace DotnetSpider.Downloader.Tests
     [TestClass()]
     public class HttpClientDownloaderTest
     {
+        #region 全局设定
         private IDisposable _shimsContext = null;
         private StubHttpClientDownloader _instance = null;
         private ShimHttpClientDownloader _instanceShim = null;
@@ -49,7 +51,9 @@ namespace DotnetSpider.Downloader.Tests
             _shimsContext.Dispose();
             _shimsContext = null;
         }
+        #endregion
 
+        #region 可以在派生类中重新实现的函数的测试
         [TestMethod]
         public void HttpClientGetterTest()
         {
@@ -80,7 +84,9 @@ namespace DotnetSpider.Downloader.Tests
             handler = (HttpClientHandler)((Tuple<HttpMessageHandler, DynamicProxy>)_private.Invoke("CreateHttpMessageHandler")).Item1;
             Assert.IsTrue(handler.AllowAutoRedirect);
         }
+        #endregion
 
+        #region 构造请求的测试
         [TestMethod]
         public void GetHttpClientTest()
         {
@@ -134,5 +140,37 @@ namespace DotnetSpider.Downloader.Tests
             Assert.AreEqual("2", actual["2"]);
             Assert.AreEqual("", actual["3"]);
         }
+
+        [TestMethod]
+        public void SetContentTest0()
+        {
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
+            Request request = new Request();
+            _type.InvokeStatic("SetContent", httpRequestMessage, request);
+
+            Assert.IsNull(httpRequestMessage.Content);
+        }
+
+        [TestMethod]
+        public async Task SetContentTest1()
+        {
+            byte[] data = new byte[2] { 0, 1 };
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
+            Request request = new Request 
+            {
+                ContentData = data
+            };
+            ShimHttpClientDownloader.CompressContentRequest = _ => data;
+            ShimHttpClientDownloader.SetHeaderHttpHeadersStringString = (_1, _2, _3) => { };
+            _type.InvokeStatic("SetContent", httpRequestMessage, request);
+
+            Assert.IsInstanceOfType(httpRequestMessage.Content, typeof(ByteArrayContent));
+            CollectionAssert.AreEqual(data, await httpRequestMessage.Content.ReadAsByteArrayAsync());
+
+            Assert.IsTrue(httpRequestMessage.Content.Headers.Contains("X-Requested-With"));
+            Assert.AreEqual("XMLHttpRequest", httpRequestMessage.Content.Headers.GetValues("X-Requested-With").Single());
+        }
+
+        #endregion
     }
 }
