@@ -1,9 +1,10 @@
 ﻿using DotnetSpider.Proxy.Helper;
-using LZ4;
+using K4os.Compression.LZ4;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -211,15 +212,10 @@ namespace DotnetSpider.Downloader
             SetHeader(httpRequestMessage.Content.Headers, "Content-Type", request.ContentType);
 
             string xRequestedWithHeader = "X-Requested-With";
-            if (request.Headers.TryGetValue(xRequestedWithHeader, out object xRequestedWithValue) &&
-                xRequestedWithValue is null)
+            if (request.Headers.ContainsKey(xRequestedWithHeader))
             {
-                httpRequestMessage.Content.Headers.Remove(xRequestedWithHeader);
-            }
-            else if (!httpRequestMessage.Content.Headers.Contains(xRequestedWithHeader) &&
-                !httpRequestMessage.Headers.Contains(xRequestedWithHeader))
-            {
-                httpRequestMessage.Content.Headers.TryAddWithoutValidation(xRequestedWithHeader, "XMLHttpRequest");
+                httpRequestMessage.Content.Headers.TryAddWithoutValidation(xRequestedWithHeader,
+                    Convert.ToString(request.Headers[xRequestedWithHeader]));
             }
         }
 
@@ -296,7 +292,12 @@ namespace DotnetSpider.Downloader
             switch (request.CompressMode)
             {
                 case CompressMode.Lz4:
-                    bytes = LZ4Codec.Wrap(bytes);
+                    byte[] temp = new byte[LZ4Codec.MaximumOutputSize(bytes.Length)];
+                    int encodedLength = LZ4Codec.Encode(
+                        bytes, 0, bytes.Length,
+                        temp, 0, temp.Length);
+                    Array.Resize(ref temp, encodedLength);
+                    bytes = temp;
                     break;
 
                 case CompressMode.None:
@@ -312,9 +313,6 @@ namespace DotnetSpider.Downloader
                     }
 
                     break;
-
-                default:
-                    throw new NotImplementedException(request.CompressMode.ToString());
             }
 
             return bytes;

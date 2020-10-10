@@ -43,7 +43,6 @@ namespace DotnetSpider.Downloader
 
         /// <summary>
         /// Http请求头。
-        /// 如果"X-Requested-With"设置为<see cref="null"/>，将不会在Http连接时使用"X-Requested-With"头。（即使<see cref="ContentData"/>不为空）
         /// </summary>
         public Dictionary<string, object> Headers { get; } = new Dictionary<string, object>();
 

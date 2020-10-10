@@ -1,24 +1,20 @@
-﻿using DotnetSpider.Common;
-using DotnetSpider.Downloader.Fakes;
+﻿using DotnetSpider.Downloader.Fakes;
 using DotnetSpider.Proxy.Helper;
 using Microsoft.QualityTools.Testing.Fakes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading.Tasks;
-using System.Web.UI.WebControls.Adapters;
 
 namespace DotnetSpider.Downloader.Tests
 {
     [ExcludeFromCodeCoverage]
     [TestClass()]
-    public class HttpClientDownloaderTest
+    public class HttpClientDownloaderTests
     {
         #region 全局设定
         private IDisposable _shimsContext = null;
@@ -159,6 +155,27 @@ namespace DotnetSpider.Downloader.Tests
             Request request = new Request 
             {
                 ContentData = data
+            };
+            ShimHttpClientDownloader.CompressContentRequest = _ => data;
+            ShimHttpClientDownloader.SetHeaderHttpHeadersStringString = (_1, _2, _3) => { };
+            _type.InvokeStatic("SetContent", httpRequestMessage, request);
+
+            Assert.IsInstanceOfType(httpRequestMessage.Content, typeof(ByteArrayContent));
+            CollectionAssert.AreEqual(data, await httpRequestMessage.Content.ReadAsByteArrayAsync());
+            Assert.IsFalse(httpRequestMessage.Content.Headers.Contains("X-Requested-With"));
+        }
+
+        [TestMethod]
+        public async Task SetContentTest2()
+        {
+            byte[] data = new byte[2] { 0, 1 };
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
+            httpRequestMessage.Headers.Add("X-Requested-With", "XMLHttpRequest");
+            Request request = new Request
+            {
+                ContentData = data,
+                ContentType = "application/json",
+                Headers = { { "X-Requested-With", "XMLHttpRequest" } }
             };
             ShimHttpClientDownloader.CompressContentRequest = _ => data;
             ShimHttpClientDownloader.SetHeaderHttpHeadersStringString = (_1, _2, _3) => { };
