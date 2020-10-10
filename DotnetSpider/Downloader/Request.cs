@@ -19,39 +19,81 @@ namespace DotnetSpider.Downloader
         /// <summary>
         /// User-Agent
         /// </summary>
-        public string UserAgent { get; set; }
+        [JsonIgnore]
+        public string UserAgent
+        {
+            get => Headers.GetValueOrDefault("User-Agent");
+            set => Headers["User-Agent"] = value;
+        }
 
         /// <summary>
         /// 请求链接时Referer参数的值
         /// </summary>
-        public string Referer { get; set; }
+        [JsonIgnore]
+        public string Referer
+        {
+            get => Headers.GetValueOrDefault("Referer");
+            set => Headers["Referer"] = value;
+        }
 
         /// <summary>
         /// 请求链接时Origin参数的值
         /// </summary>
-        public string Origin { get; set; }
+        [JsonIgnore]
+        public string Origin
+        {
+            get => Headers.GetValueOrDefault("Origin");
+            set => Headers["Origin"] = value;
+        }
 
         /// <summary>
         /// Accept
         /// </summary>
-        public string Accept { get; set; }
+        [JsonIgnore]
+        public string Accept
+        {
+            get => Headers.GetValueOrDefault("Accept");
+            set => Headers["Accept"] = value;
+        }
 
         /// <summary>
-        /// 仅在发送 POST/PUT 请求时需要设置
+        /// 仅在发送 POST/PUT 请求时需要设置。
         /// </summary>
-        public string ContentType { get; set; }
+        [JsonIgnore]
+        public string ContentType
+        {
+            get => Headers.GetValueOrDefault("Content-Type");
+            set => Headers["Content-Type"] = value;
+        }
+
+        /// <summary>
+        /// X-Requested-With
+        /// </summary>
+        [JsonIgnore]
+        public string XRequestedWith
+        {
+            get => Headers.GetValueOrDefault("X-Requested-With");
+            set => Headers["X-Requested-With"] = value;
+        }
 
         /// <summary>
         /// Http请求头。
+        /// 不包括<see cref="Cookies"/>内容。
         /// </summary>
-        public Dictionary<string, object> Headers { get; } = new Dictionary<string, object>();
+        public Dictionary<string, string> Headers { get; } = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Cookies
+        /// </summary>
+        public Dictionary<string, string> Cookies { get; } = new Dictionary<string, string>();
 
         #endregion
 
         private string _encodingName = null;
         private bool _encodingNameChanged = false;
         /// <summary>
-        /// 字符编码，默认为UTF-8
+        /// 字符编码，默认为UTF-8。
+        /// 只影响<see cref="Content"/>转为<seealso cref="ContentData"/>时的编码格式。
         /// </summary>
         public string EncodingName 
         { 
@@ -127,11 +169,6 @@ namespace DotnetSpider.Downloader
         public string Url { get; set; }
 
         /// <summary>
-        /// Cookies
-        /// </summary>
-        public Dictionary<string, string> Cookies { get; } = new Dictionary<string, string>();
-
-        /// <summary>
         /// 构造方法
         /// </summary>
         public Request()
@@ -194,17 +231,12 @@ namespace DotnetSpider.Downloader
 
             if (Equals(a.Url, b.Url) == false ||
                 Equals(a.Method, b.Method) == false ||
-                Equals(a.Accept, b.Accept) == false ||
                 Equals(a.CompressMode, b.CompressMode) == false ||
                 Equals(a.Content, b.Content) == false ||
-                Equals(a.ContentType, b.ContentType) == false ||
-                (a.Content == null && Equals(a.ContentData, b.ContentData) == false) ||
+                Equals(a.ContentData, b.ContentData) == false ||
                 Equals(a.EncodingName, b.EncodingName) == false ||
                 Comparaor.AreEquivalent(a.Headers, b.Headers) == false ||
                 Comparaor.AreEquivalent(a.Cookies, b.Cookies) == false ||
-                Equals(a.Origin, b.Origin) == false ||
-                Equals(a.Referer, b.Referer) == false ||
-                Equals(a.UserAgent, b.UserAgent) == false ||
                 Comparaor.AreEquivalent(a.Properties, b.Properties) == false)
             {
                 return false;
@@ -214,7 +246,7 @@ namespace DotnetSpider.Downloader
         }
 
         /// <summary>
-        /// 计算除Properties属性外的其他属性的Hash值。
+        /// 计算Hash值。
         /// </summary>
         /// <returns>Hash值</returns>
         public override int GetHashCode()
@@ -222,19 +254,15 @@ namespace DotnetSpider.Downloader
             unchecked
             {
                 int c = HashCode.BeginCode;
-                c = HashCode.GetHashCode(c, Accept);
                 c = HashCode.GetHashCode(c, CompressMode);
                 c = HashCode.GetHashCode(c, Content);
                 c = HashCode.GetHashCode(c, ContentData);
-                c = HashCode.GetHashCode(c, ContentType);
                 c = HashCode.GetHashCode(c, Cookies);
                 c = HashCode.GetHashCode(c, EncodingName);
                 c = HashCode.GetHashCode(c, Headers);
                 c = HashCode.GetHashCode(c, Method);
-                c = HashCode.GetHashCode(c, Origin);
-                c = HashCode.GetHashCode(c, Referer);
+                c = HashCode.GetHashCode(c, Properties);
                 c = HashCode.GetHashCode(c, Url);
-                c = HashCode.GetHashCode(c, UserAgent);
                 return c;
             }
         }

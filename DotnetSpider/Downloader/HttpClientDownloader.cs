@@ -186,10 +186,10 @@ namespace DotnetSpider.Downloader
             // Headers 的优先级低于 Request.UserAgent 这种特定设置, 因此先加载所有 Headers, 再使用 Request.UserAgent 覆盖
             foreach (var header in request.Headers)
             {
-                httpRequestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value?.ToString());
+                httpRequestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
 
-            SetExtraHeaders(httpRequestMessage.Headers, request);
+            SetCookies(httpRequestMessage.Headers, request);
             SetContent(httpRequestMessage, request);
             return httpRequestMessage;
         }
@@ -210,27 +210,7 @@ namespace DotnetSpider.Downloader
             var bytes = CompressContent(request);
             httpRequestMessage.Content = new ByteArrayContent(bytes);
             SetHeader(httpRequestMessage.Content.Headers, "Content-Type", request.ContentType);
-
-            string xRequestedWithHeader = "X-Requested-With";
-            if (request.Headers.ContainsKey(xRequestedWithHeader))
-            {
-                httpRequestMessage.Content.Headers.TryAddWithoutValidation(xRequestedWithHeader,
-                    Convert.ToString(request.Headers[xRequestedWithHeader]));
-            }
-        }
-
-        /// <summary>
-        /// 设置额外的HTTP请求头。
-        /// </summary>
-        /// <param name="headers">HTTP请求头集合</param>
-        /// <param name="request">HTTP请求</param>
-        private static void SetExtraHeaders(HttpRequestHeaders headers, Request request)
-        {
-            SetHeader(headers, "User-Agent", request.UserAgent);
-            SetHeader(headers, "Referer", request.Referer);
-            SetHeader(headers, "Origin", request.Origin);
-            SetHeader(headers, "Accept", request.Accept);
-            SetCookies(headers, request);
+            SetHeader(httpRequestMessage.Content.Headers, "X-Requested-With", request.XRequestedWith);
         }
 
         /// <summary>
@@ -272,7 +252,7 @@ namespace DotnetSpider.Downloader
         /// <param name="value">头的值</param>
         private static void SetHeader(HttpHeaders headers, string key, string value)
         {
-            if (string.IsNullOrEmpty(value))
+            if (value is null)
             {
                 return;
             }

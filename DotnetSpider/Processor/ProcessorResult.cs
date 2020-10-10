@@ -143,26 +143,6 @@ namespace DotnetSpider.Processor
                         request.Headers.Add(header.Key, header.Value);
                     }
                 }
-
-                if (string.IsNullOrWhiteSpace(request.Accept))
-                {
-                    request.Accept = Request.Accept;
-                }
-
-                if (string.IsNullOrWhiteSpace(request.Origin))
-                {
-                    request.Origin = Request.Origin;
-                }
-
-                if (string.IsNullOrWhiteSpace(request.Referer))
-                {
-                    request.Referer = Request.Referer;
-                }
-
-                if (string.IsNullOrWhiteSpace(request.UserAgent))
-                {
-                    request.UserAgent = Request.UserAgent;
-                }
             }
 
             TargetRequests.Add(request);

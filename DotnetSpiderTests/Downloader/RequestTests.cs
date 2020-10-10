@@ -125,9 +125,9 @@ namespace DotnetSpider.Downloader.Tests
         public void GetHashCodeTest2()
         {
             var a = new Request("test");
-            a.Headers.Add("1", 1);
+            a.Headers.Add("1", "1");
             var b = new Request("test");
-            b.Headers.Add("1", 1);
+            b.Headers.Add("1", "1");
             Assert.IsTrue(a.GetHashCode() == b.GetHashCode());
         }
 
@@ -137,7 +137,7 @@ namespace DotnetSpider.Downloader.Tests
             var a = new Request("test");
             var b = new Request("test");
             b.Properties.Add("1", 1);
-            Assert.IsTrue(a.GetHashCode() == b.GetHashCode());
+            Assert.IsTrue(a.GetHashCode() != b.GetHashCode());
         }
 
         #endregion
@@ -173,6 +173,66 @@ namespace DotnetSpider.Downloader.Tests
             request.Method = HttpMethod.Post;
             Assert.AreEqual(HttpMethod.Post, request.Method);
             Assert.IsNotNull(request.Headers);
+        }
+
+        [TestMethod()]
+        public void PropertyTest1()
+        {
+            Request request = new Request(null);
+
+            Assert.IsNull(request.Accept);
+            request.Accept = "1";
+            Assert.AreEqual("1", request.Accept);
+        }
+
+        [TestMethod()]
+        public void PropertyTest2()
+        {
+            Request request = new Request(null);
+
+            Assert.IsNull(request.UserAgent);
+            request.UserAgent = "1";
+            Assert.AreEqual("1", request.UserAgent);
+        }
+
+        [TestMethod()]
+        public void PropertyTest3()
+        {
+            Request request = new Request(null);
+
+            Assert.IsNull(request.Referer);
+            request.Referer = "1";
+            Assert.AreEqual("1", request.Referer);
+        }
+
+        [TestMethod()]
+        public void PropertyTest4()
+        {
+            Request request = new Request(null);
+
+            Assert.IsNull(request.Origin);
+            request.Origin = "1";
+            Assert.AreEqual("1", request.Origin);
+        }
+
+        [TestMethod()]
+        public void PropertyTest5()
+        {
+            Request request = new Request(null);
+
+            Assert.IsNull(request.ContentType);
+            request.ContentType = "1";
+            Assert.AreEqual("1", request.ContentType);
+        }
+
+        [TestMethod()]
+        public void PropertyTest6()
+        {
+            Request request = new Request(null);
+
+            Assert.IsNull(request.XRequestedWith);
+            request.XRequestedWith = "1";
+            Assert.AreEqual("1", request.XRequestedWith);
         }
 
         [TestMethod()]

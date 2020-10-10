@@ -107,8 +107,8 @@ namespace DotnetSpider.Downloader.Tests
         [TestMethod]
         public void GenerateHttpRequestMessageTest()
         {
-            bool callSetExtraHeaders = false;
-            ShimHttpClientDownloader.SetExtraHeadersHttpRequestHeadersRequest = (_1, _2) => callSetExtraHeaders = true;
+            bool callSetCookies = false;
+            ShimHttpClientDownloader.SetCookiesHttpRequestHeadersRequest = (_1, _2) => callSetCookies = true;
             bool callSetContent = false;
             ShimHttpClientDownloader.SetContentHttpRequestMessageRequest = (_1, _2) => callSetContent = true;
 
@@ -118,7 +118,7 @@ namespace DotnetSpider.Downloader.Tests
             request.Headers["3"] = null;
 
             var message = (HttpRequestMessage)_type.InvokeStatic("GenerateHttpRequestMessage", request);
-            Assert.IsTrue(callSetExtraHeaders);
+            Assert.IsTrue(callSetCookies);
             Assert.IsTrue(callSetContent);
             Assert.IsNotNull(message);
             Assert.AreEqual(request.Url, message.RequestUri.OriginalString);
@@ -178,7 +178,6 @@ namespace DotnetSpider.Downloader.Tests
                 Headers = { { "X-Requested-With", "XMLHttpRequest" } }
             };
             ShimHttpClientDownloader.CompressContentRequest = _ => data;
-            ShimHttpClientDownloader.SetHeaderHttpHeadersStringString = (_1, _2, _3) => { };
             _type.InvokeStatic("SetContent", httpRequestMessage, request);
 
             Assert.IsInstanceOfType(httpRequestMessage.Content, typeof(ByteArrayContent));
