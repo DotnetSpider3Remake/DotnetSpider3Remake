@@ -159,9 +159,11 @@ namespace DotnetSpider.Downloader
         }
 
         /// <summary>
-        /// 如果是 POST/PUT 请求, 可以设置压缩模式上传数据。（仅当使用Content代替ContentData时）
+        /// 如果是 POST/PUT 请求, 可以设置压缩模式上传数据。
+        /// 此设置不会修改请求头。由<see cref="IDownloader"/>来压缩<see cref="ContentData"/>。
+        /// 默认值为<see cref="CompressMode.None"/>。
         /// </summary>
-        public CompressMode CompressMode { get; set; }
+        public CompressMode CompressMode { get; set; } = CompressMode.None;
 
         /// <summary>
         /// 请求链接, 不使用 Uri 的原因是可能引起多重编码的问题

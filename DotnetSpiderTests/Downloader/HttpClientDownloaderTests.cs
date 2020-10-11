@@ -187,6 +187,98 @@ namespace DotnetSpider.Downloader.Tests
             Assert.AreEqual("XMLHttpRequest", httpRequestMessage.Content.Headers.GetValues("X-Requested-With").Single());
         }
 
+        [TestMethod]
+        public void SetCookiesTest0()
+        {
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
+            Request request = new Request();
+            _type.InvokeStatic("SetCookies", httpRequestMessage.Headers, request);
+
+            Assert.IsFalse(httpRequestMessage.Headers.Contains("Cookie"));
+        }
+
+        [TestMethod]
+        public void SetCookiesTest1()
+        {
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
+            Request request = new Request();
+            request.Cookies["1"] = "a";
+            request.Cookies["2"] = "b";
+            _type.InvokeStatic("SetCookies", httpRequestMessage.Headers, request);
+
+            Assert.IsTrue(httpRequestMessage.Headers.TryGetValues("Cookie", out IEnumerable<string> values));
+            Assert.AreEqual("1:a; 2:b", values.Single());
+        }
+
+        [TestMethod]
+        public void SetHeaderTest0()
+        {
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
+            _type.InvokeStatic("SetHeader", httpRequestMessage.Headers, "1", null);
+            Assert.IsFalse(httpRequestMessage.Headers.Contains("1"));
+        }
+
+        [TestMethod]
+        public void SetHeaderTest1()
+        {
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage();
+            _type.InvokeStatic("SetHeader", httpRequestMessage.Headers, "1", "a");
+            Assert.IsTrue(httpRequestMessage.Headers.TryGetValues("1", out IEnumerable<string> values));
+            Assert.AreEqual("a", values.Single());
+        }
+
+        [TestMethod]
+        public void CompressContentTest0()
+        {
+            byte[] expected = new byte[] { 7, 8 };
+            Request request = new Request
+            {
+                CompressMode = CompressMode.None,
+                ContentData = expected
+            };
+            var actual = (byte[])_type.InvokeStatic("CompressContent", request);
+            CollectionAssert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void CompressContentTest1()
+        {
+            byte[] expected = new byte[] { 31, 139, 8, 0, 0, 0, 0, 0, 4, 0, 99, 231, 0, 0, 10, 12, 67, 0, 2, 0, 0, 0 };
+            Request request = new Request
+            {
+                CompressMode = CompressMode.Gzip,
+                ContentData = new byte[] { 7, 8 }
+            };
+            var actual = (byte[])_type.InvokeStatic("CompressContent", request);
+            CollectionAssert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void CompressContentTest2()
+        {
+            byte[] expected = new byte[] { 32, 7, 8 };
+            Request request = new Request
+            {
+                CompressMode = CompressMode.Lz4,
+                ContentData = new byte[] { 7, 8 }
+            };
+            var actual = (byte[])_type.InvokeStatic("CompressContent", request);
+            CollectionAssert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void CompressContentTest4()
+        {
+            byte[] expected = new byte[] { 99, 231, 0, 0 };
+            Request request = new Request
+            {
+                CompressMode = CompressMode.Deflate,
+                ContentData = new byte[] { 7, 8 }
+            };
+            var actual = (byte[])_type.InvokeStatic("CompressContent", request);
+            CollectionAssert.AreEqual(expected, actual);
+        }
+
         #endregion
     }
 }

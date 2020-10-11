@@ -220,7 +220,7 @@ namespace DotnetSpider.Downloader
         /// <param name="request">HTTP请求</param>
         private static void SetCookies(HttpRequestHeaders headers, Request request)
         {
-            if (request.Cookies != null && request.Cookies.Count > 0)
+            if (request.Cookies.Count > 0)
             {
                 StringBuilder builder = new StringBuilder();
                 bool first = true;
@@ -287,6 +287,17 @@ namespace DotnetSpider.Downloader
                     using (MemoryStream ms = new MemoryStream())
                     {
                         using GZipStream compressedzipStream = new GZipStream(ms, CompressionMode.Compress);
+                        compressedzipStream.Write(bytes, 0, bytes.Length);
+                        compressedzipStream.Close();
+                        bytes = ms.ToArray();
+                    }
+
+                    break;
+
+                case CompressMode.Deflate:
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        using DeflateStream compressedzipStream = new DeflateStream(ms, CompressionMode.Compress);
                         compressedzipStream.Write(bytes, 0, bytes.Length);
                         compressedzipStream.Close();
                         bytes = ms.ToArray();
@@ -369,7 +380,7 @@ namespace DotnetSpider.Downloader
                 string[] contentTypes = contentType.Split(';');
                 foreach (var i in contentTypes)
                 {
-                    if (ExcludeMediaTypes.Contains(i))
+                    if (ExcludeMediaTypes.Contains(i.Trim()))
                     {
                         isText = true;
                         break;
