@@ -6,6 +6,9 @@ using DotnetSpider.Common;
 using System.Text;
 using System.Net;
 using System;
+using System.IO;
+using System.IO.Compression;
+using K4os.Compression.LZ4;
 
 namespace DotnetSpider.Downloader
 {
@@ -159,9 +162,10 @@ namespace DotnetSpider.Downloader
         }
 
         /// <summary>
-        /// 如果是 POST/PUT 请求, 可以设置压缩模式上传数据。
-        /// 此设置不会修改请求头。由<see cref="IDownloader"/>来压缩<see cref="ContentData"/>。
+        /// 如果是 POST/PUT 请求, 可以设置上传数据的压缩模式。
+        /// 此设置不会修改请求头。
         /// 默认值为<see cref="CompressMode.None"/>。
+        /// 可以调用<seealso cref="GetCompressedContentData"/>获取压缩后的数据。
         /// </summary>
         public CompressMode CompressMode { get; set; } = CompressMode.None;
 
@@ -208,6 +212,60 @@ namespace DotnetSpider.Downloader
         public Uri GetUri()
         {
             return new Uri(Url);
+        }
+
+        /// <summary>
+        /// 获取压缩后的内容数据。
+        /// 压缩方式由<see cref="CompressMode"/>指定。
+        /// </summary>
+        /// <returns>压缩后的内容数据</returns>
+        /// <exception cref="NullReferenceException"/>
+        public byte[] GetCompressedContentData()
+        {
+            var data = ContentData;
+            if (data == null)
+            {
+                throw new NullReferenceException("Can not compress null content data!");
+            }
+
+            switch (CompressMode)
+            {
+                case CompressMode.Lz4:
+                    byte[] temp = new byte[LZ4Codec.MaximumOutputSize(data.Length)];
+                    int encodedLength = LZ4Codec.Encode(
+                        data, 0, data.Length,
+                        temp, 0, temp.Length);
+                    Array.Resize(ref temp, encodedLength);
+                    data = temp;
+                    break;
+
+                case CompressMode.None:
+                    break;
+
+                case CompressMode.Gzip:
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        using GZipStream compressedzipStream = new GZipStream(ms, CompressionMode.Compress);
+                        compressedzipStream.Write(data, 0, data.Length);
+                        compressedzipStream.Close();
+                        data = ms.ToArray();
+                    }
+
+                    break;
+
+                case CompressMode.Deflate:
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        using DeflateStream compressedzipStream = new DeflateStream(ms, CompressionMode.Compress);
+                        compressedzipStream.Write(data, 0, data.Length);
+                        compressedzipStream.Close();
+                        data = ms.ToArray();
+                    }
+
+                    break;
+            }
+
+            return data;
         }
 
         /// <summary>

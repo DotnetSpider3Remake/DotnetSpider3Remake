@@ -207,8 +207,7 @@ namespace DotnetSpider.Downloader
                 return;
             }
 
-            var bytes = CompressContent(request);
-            httpRequestMessage.Content = new ByteArrayContent(bytes);
+            httpRequestMessage.Content = new ByteArrayContent(request.GetCompressedContentData());
             SetHeader(httpRequestMessage.Content.Headers, "Content-Type", request.ContentType);
             SetHeader(httpRequestMessage.Content.Headers, "X-Requested-With", request.XRequestedWith);
         }
@@ -259,54 +258,6 @@ namespace DotnetSpider.Downloader
 
             headers.Remove(key);
             headers.TryAddWithoutValidation(key, value);
-        }
-
-        /// <summary>
-        /// 压缩<seealso cref="Request.ContentData"/>字段。
-        /// </summary>
-        /// <param name="request">HTTP请求</param>
-        /// <returns>压缩后的字节数组</returns>
-        private static byte[] CompressContent(Request request)
-        {
-            var bytes = request.ContentData;
-            switch (request.CompressMode)
-            {
-                case CompressMode.Lz4:
-                    byte[] temp = new byte[LZ4Codec.MaximumOutputSize(bytes.Length)];
-                    int encodedLength = LZ4Codec.Encode(
-                        bytes, 0, bytes.Length,
-                        temp, 0, temp.Length);
-                    Array.Resize(ref temp, encodedLength);
-                    bytes = temp;
-                    break;
-
-                case CompressMode.None:
-                    break;
-
-                case CompressMode.Gzip:
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        using GZipStream compressedzipStream = new GZipStream(ms, CompressionMode.Compress);
-                        compressedzipStream.Write(bytes, 0, bytes.Length);
-                        compressedzipStream.Close();
-                        bytes = ms.ToArray();
-                    }
-
-                    break;
-
-                case CompressMode.Deflate:
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        using DeflateStream compressedzipStream = new DeflateStream(ms, CompressionMode.Compress);
-                        compressedzipStream.Write(bytes, 0, bytes.Length);
-                        compressedzipStream.Close();
-                        bytes = ms.ToArray();
-                    }
-
-                    break;
-            }
-
-            return bytes;
         }
         #endregion
 
@@ -406,7 +357,7 @@ namespace DotnetSpider.Downloader
             if (httpResponse.Content != null)
             {
                 AppendResponseHeaders(response.Headers, httpResponse.Content.Headers);
-                response.ContentType = httpResponse.Content.Headers?.ContentType?.ToString() ?? string.Empty;
+                response.ContentType = httpResponse.Content.Headers.ContentType?.ToString() ?? string.Empty;
                 if (IsTextResponse(response.ContentType))
                 {
                     response.Content = await httpResponse.Content.ReadAsStringAsync();
@@ -415,6 +366,10 @@ namespace DotnetSpider.Downloader
                 {
                     response.Content = await httpResponse.Content.ReadAsByteArrayAsync();
                 }
+            }
+            else
+            {
+                response.ContentType = string.Empty;
             }
         }
         #endregion

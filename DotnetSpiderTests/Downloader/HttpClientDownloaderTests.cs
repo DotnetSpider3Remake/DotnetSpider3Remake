@@ -156,7 +156,6 @@ namespace DotnetSpider.Downloader.Tests
             {
                 ContentData = data
             };
-            ShimHttpClientDownloader.CompressContentRequest = _ => data;
             ShimHttpClientDownloader.SetHeaderHttpHeadersStringString = (_1, _2, _3) => { };
             _type.InvokeStatic("SetContent", httpRequestMessage, request);
 
@@ -177,7 +176,6 @@ namespace DotnetSpider.Downloader.Tests
                 ContentType = "application/json",
                 Headers = { { "X-Requested-With", "XMLHttpRequest" } }
             };
-            ShimHttpClientDownloader.CompressContentRequest = _ => data;
             _type.InvokeStatic("SetContent", httpRequestMessage, request);
 
             Assert.IsInstanceOfType(httpRequestMessage.Content, typeof(ByteArrayContent));
@@ -226,59 +224,6 @@ namespace DotnetSpider.Downloader.Tests
             Assert.IsTrue(httpRequestMessage.Headers.TryGetValues("1", out IEnumerable<string> values));
             Assert.AreEqual("a", values.Single());
         }
-
-        [TestMethod]
-        public void CompressContentTest0()
-        {
-            byte[] expected = new byte[] { 7, 8 };
-            Request request = new Request
-            {
-                CompressMode = CompressMode.None,
-                ContentData = expected
-            };
-            var actual = (byte[])_type.InvokeStatic("CompressContent", request);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-
-        [TestMethod]
-        public void CompressContentTest1()
-        {
-            byte[] expected = new byte[] { 31, 139, 8, 0, 0, 0, 0, 0, 4, 0, 99, 231, 0, 0, 10, 12, 67, 0, 2, 0, 0, 0 };
-            Request request = new Request
-            {
-                CompressMode = CompressMode.Gzip,
-                ContentData = new byte[] { 7, 8 }
-            };
-            var actual = (byte[])_type.InvokeStatic("CompressContent", request);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-
-        [TestMethod]
-        public void CompressContentTest2()
-        {
-            byte[] expected = new byte[] { 32, 7, 8 };
-            Request request = new Request
-            {
-                CompressMode = CompressMode.Lz4,
-                ContentData = new byte[] { 7, 8 }
-            };
-            var actual = (byte[])_type.InvokeStatic("CompressContent", request);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-
-        [TestMethod]
-        public void CompressContentTest4()
-        {
-            byte[] expected = new byte[] { 99, 231, 0, 0 };
-            Request request = new Request
-            {
-                CompressMode = CompressMode.Deflate,
-                ContentData = new byte[] { 7, 8 }
-            };
-            var actual = (byte[])_type.InvokeStatic("CompressContent", request);
-            CollectionAssert.AreEqual(expected, actual);
-        }
-
         #endregion
 
         #region 解析响应中的测试
@@ -333,6 +278,90 @@ namespace DotnetSpider.Downloader.Tests
             CollectionAssert.AreEquivalent(new Dictionary<string, string> { { "1", "a" } }, cookies[0]);
         }
 
+        [TestMethod]
+        public void IsTextResponseTest()
+        {
+            Assert.IsTrue((bool)_private.Invoke("IsTextResponse", ""));
+            Assert.IsTrue((bool)_private.Invoke("IsTextResponse", "text/html; charset=utf-8"));
+            Assert.IsFalse((bool)_private.Invoke("IsTextResponse", "multipart/form-data; boundary=something"));
+        }
+
+        [TestMethod]
+        public async Task GenerateResponseTest0()
+        {
+            ShimHttpClientDownloader.AppendResponseHeadersDictionaryOfStringHashSetOfStringHttpHeaders = (_1, _2) => { };
+            ShimHttpClientDownloader.AppendSetCookiesListOfDictionaryOfStringStringDictionaryOfStringHashSetOfString = (_1, _2) => { };
+            HttpResponseMessage responseMessage = new HttpResponseMessage
+            {
+                RequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://www.baidu.com"),
+                StatusCode = HttpStatusCode.OK
+            };
+            Response response = new Response();
+            await (Task)_private.Invoke("GenerateResponse", response, responseMessage);
+
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            Assert.AreEqual("https://www.baidu.com/", response.TargetUrl);
+            Assert.IsNull(response.Content);
+            Assert.IsNotNull(response.ContentType);
+            Assert.AreEqual(0, response.ContentType.Length);
+        }
+
+        [TestMethod]
+        public async Task GenerateResponseTest1()
+        {
+            ShimHttpClientDownloader.AppendResponseHeadersDictionaryOfStringHashSetOfStringHttpHeaders = (_1, _2) => { };
+            ShimHttpClientDownloader.AppendSetCookiesListOfDictionaryOfStringStringDictionaryOfStringHashSetOfString = (_1, _2) => { };
+            HttpResponseMessage responseMessage = new HttpResponseMessage
+            {
+                RequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://www.baidu.com"),
+                StatusCode = HttpStatusCode.OK,
+                Content = new System.Net.Http.Fakes.StubHttpContent
+                {
+                    CallBase = true
+                }
+            };
+            System.Net.Http.Fakes.ShimHttpContent shimHttpContent = new System.Net.Http.Fakes.ShimHttpContent(responseMessage.Content);
+            shimHttpContent.ReadAsStringAsync = () => Task.FromResult("123");
+            _instanceShim.IsTextResponseString = _ => true;
+
+            Response response = new Response();
+            await (Task)_private.Invoke("GenerateResponse", response, responseMessage);
+            Assert.IsNotNull(response.Content);
+            Assert.IsInstanceOfType(response.Content, typeof(string));
+            Assert.AreEqual("123", (string)response.Content);
+            Assert.IsNotNull(response.ContentType);
+            Assert.AreEqual(0, response.ContentType.Length);
+        }
+
+        [TestMethod]
+        public async Task GenerateResponseTest2()
+        {
+            var data = new byte[] { 1, 2 };
+
+            ShimHttpClientDownloader.AppendResponseHeadersDictionaryOfStringHashSetOfStringHttpHeaders = (_1, _2) => { };
+            ShimHttpClientDownloader.AppendSetCookiesListOfDictionaryOfStringStringDictionaryOfStringHashSetOfString = (_1, _2) => { };
+            HttpResponseMessage responseMessage = new HttpResponseMessage
+            {
+                RequestMessage = new HttpRequestMessage(HttpMethod.Get, "https://www.baidu.com"),
+                StatusCode = HttpStatusCode.OK,
+                Content = new System.Net.Http.Fakes.StubHttpContent
+                {
+                    CallBase = true
+                }
+            };
+            System.Net.Http.Fakes.ShimHttpContent shimHttpContent = new System.Net.Http.Fakes.ShimHttpContent(responseMessage.Content);
+            shimHttpContent.ReadAsByteArrayAsync = () => Task.FromResult(data);
+            responseMessage.Content.Headers.TryAddWithoutValidation("Content-Type", "text/html; charset=utf-8");
+            _instanceShim.IsTextResponseString = _ => false;
+
+            Response response = new Response();
+            await (Task)_private.Invoke("GenerateResponse", response, responseMessage);
+            Assert.IsNotNull(response.Content);
+            Assert.IsInstanceOfType(response.Content, typeof(byte[]));
+            Assert.AreSame(data, response.Content);
+            Assert.IsNotNull(response.ContentType);
+            Assert.AreEqual("text/html; charset=utf-8", response.ContentType);
+        }
         #endregion
     }
 }

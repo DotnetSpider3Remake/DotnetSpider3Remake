@@ -165,6 +165,7 @@ namespace DotnetSpider.Downloader.Tests
             Assert.AreNotSame(uri, request.GetUri());
         }
 
+        #region 公共属性
         [TestMethod()]
         public void PropertyTest0()
         {
@@ -234,7 +235,9 @@ namespace DotnetSpider.Downloader.Tests
             request.XRequestedWith = "1";
             Assert.AreEqual("1", request.XRequestedWith);
         }
+        #endregion
 
+        #region 内容数据
         [TestMethod()]
         public void ContentDataTest0()
         {
@@ -281,5 +284,67 @@ namespace DotnetSpider.Downloader.Tests
             CollectionAssert.AreNotEqual(actual, request.ContentData);
             CollectionAssert.AreEqual(Encoding.UTF32.GetBytes("test"), request.ContentData);
         }
+
+
+
+        [TestMethod]
+        public void GetCompressedContentDataTest0()
+        {
+            byte[] expected = new byte[] { 7, 8 };
+            Request request = new Request
+            {
+                CompressMode = CompressMode.None,
+                ContentData = expected
+            };
+            var actual = request.GetCompressedContentData();
+            CollectionAssert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void GetCompressedContentDataTest1()
+        {
+            byte[] expected = new byte[] { 31, 139, 8, 0, 0, 0, 0, 0, 4, 0, 99, 231, 0, 0, 10, 12, 67, 0, 2, 0, 0, 0 };
+            Request request = new Request
+            {
+                CompressMode = CompressMode.Gzip,
+                ContentData = new byte[] { 7, 8 }
+            };
+            var actual = request.GetCompressedContentData();
+            CollectionAssert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void GetCompressedContentDataTest2()
+        {
+            byte[] expected = new byte[] { 32, 7, 8 };
+            Request request = new Request
+            {
+                CompressMode = CompressMode.Lz4,
+                ContentData = new byte[] { 7, 8 }
+            };
+            var actual = request.GetCompressedContentData();
+            CollectionAssert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void GetCompressedContentDataTest4()
+        {
+            byte[] expected = new byte[] { 99, 231, 0, 0 };
+            Request request = new Request
+            {
+                CompressMode = CompressMode.Deflate,
+                ContentData = new byte[] { 7, 8 }
+            };
+            var actual = request.GetCompressedContentData();
+            CollectionAssert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void GetCompressedContentDataTest5()
+        {
+            Request request = new Request();
+            Assert.ThrowsException<NullReferenceException>(request.GetCompressedContentData);
+        }
+        #endregion
     }
 }
