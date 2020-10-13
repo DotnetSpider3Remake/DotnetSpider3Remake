@@ -54,6 +54,7 @@ namespace DotnetSpider.Downloader.Tests
         public void HttpClientGetterTest()
         {
             Assert.IsNotNull(_instance.HttpClientGetter);
+            using var _ = _instance.HttpClientGetter(new HttpClientHandler());
             _instance.HttpClientGetter = null;
             Assert.IsNull(_instance.HttpClientGetter);
         }
