@@ -280,5 +280,59 @@ namespace DotnetSpider.Downloader.Tests
         }
 
         #endregion
+
+        #region 解析响应中的测试
+        [TestMethod]
+        public void AppendResponseHeadersTest()
+        {
+            using HttpResponseMessage message = new HttpResponseMessage();
+            message.Headers.TryAddWithoutValidation("1", "a");
+            message.Headers.TryAddWithoutValidation("2", "a");
+
+            Dictionary<string, HashSet<string>> headers = new Dictionary<string, HashSet<string>>
+            {
+                { "1", new HashSet<string> { "b", "c" } }
+            };
+
+            _type.InvokeStatic("AppendResponseHeaders", headers, message.Headers);
+            Assert.IsTrue(headers.ContainsKey("1"));
+            CollectionAssert.AreEquivalent(new string[] { "a", "b", "c" }, headers["1"].ToArray());
+            Assert.IsTrue(headers.ContainsKey("2"));
+            CollectionAssert.AreEquivalent(new string[] { "a" }, headers["2"].ToArray());
+        }
+
+        [TestMethod]
+        public void AppendSetCookiesTest0()
+        {
+            List<Dictionary<string, string>> cookies = new List<Dictionary<string, string>>();
+            Dictionary<string, HashSet<string>> headers = new Dictionary<string, HashSet<string>>();
+
+            _type.InvokeStatic("AppendSetCookies", cookies, headers);
+            Assert.AreEqual(0, cookies.Count);
+        }
+
+        [TestMethod]
+        public void AppendSetCookiesTest1()
+        {
+            List<Dictionary<string, string>> cookies = new List<Dictionary<string, string>>();
+            Dictionary<string, HashSet<string>> headers = new Dictionary<string, HashSet<string>>
+            {
+                { 
+                    "Set-Cookie",
+                    new HashSet<string> 
+                    {
+                        "",
+                        "1",
+                        "1:a"
+                    } 
+                }
+            };
+
+            _type.InvokeStatic("AppendSetCookies", cookies, headers);
+            Assert.AreEqual(1, cookies.Count);
+            CollectionAssert.AreEquivalent(new Dictionary<string, string> { { "1", "a" } }, cookies[0]);
+        }
+
+        #endregion
     }
 }
