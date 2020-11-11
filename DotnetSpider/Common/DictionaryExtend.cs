@@ -6,6 +6,7 @@ namespace DotnetSpider.Common
 {
     public static class DictionaryExtend
     {
+#if NETSTANDARD2_0
         /// <summary>
         /// 获取值，如果值不存在，返回<see cref="default"/>。
         /// </summary>
@@ -46,5 +47,6 @@ namespace DotnetSpider.Common
                 return defaultValue;
             }
         }
+#endif
     }
 }

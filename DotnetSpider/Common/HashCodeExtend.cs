@@ -7,7 +7,7 @@ namespace DotnetSpider.Common
     /// <summary>
     /// Hash函数类
     /// </summary>
-    public static class HashCode
+    public static class HashCodeExtend
     {
         /// <summary>
         /// 作为乘法因子的魔术数。

@@ -313,16 +313,16 @@ namespace DotnetSpider.Downloader
         {
             unchecked
             {
-                int c = HashCode.BeginCode;
-                c = HashCode.GetHashCode(c, CompressMode);
-                c = HashCode.GetHashCode(c, Content);
-                c = HashCode.GetHashCode(c, ContentData);
-                c = HashCode.GetHashCode(c, Cookies);
-                c = HashCode.GetHashCode(c, EncodingName);
-                c = HashCode.GetHashCode(c, Headers);
-                c = HashCode.GetHashCode(c, Method);
-                c = HashCode.GetHashCode(c, Properties);
-                c = HashCode.GetHashCode(c, Url);
+                int c = HashCodeExtend.BeginCode;
+                c = HashCodeExtend.GetHashCode(c, CompressMode);
+                c = HashCodeExtend.GetHashCode(c, Content);
+                c = HashCodeExtend.GetHashCode(c, ContentData);
+                c = HashCodeExtend.GetHashCode(c, Cookies);
+                c = HashCodeExtend.GetHashCode(c, EncodingName);
+                c = HashCodeExtend.GetHashCode(c, Headers);
+                c = HashCodeExtend.GetHashCode(c, Method);
+                c = HashCodeExtend.GetHashCode(c, Properties);
+                c = HashCodeExtend.GetHashCode(c, Url);
                 return c;
             }
         }
