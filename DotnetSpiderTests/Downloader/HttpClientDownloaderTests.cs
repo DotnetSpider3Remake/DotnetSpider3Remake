@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -46,6 +47,153 @@ namespace DotnetSpider.Downloader.Tests
             _instance = null;
             _shimsContext.Dispose();
             _shimsContext = null;
+        }
+        #endregion
+
+        #region 抽象函数实现的测试
+        [TestMethod]
+        [Timeout(5000)]
+        public async Task DownloadingTest0()
+        {
+            _instanceShim.GetHttpClientRequestIWebProxy = (_1, _2) => new HttpClient();
+            ShimHttpClientDownloader.GenerateHttpRequestMessageRequest = _ => new HttpRequestMessage();
+            _instance.Timeout = TimeSpan.MinValue;
+            Response response = await (Task<Response>)_private.Invoke("Downloading", new Request(), (IWebProxy)null);
+            Assert.AreEqual(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+            Assert.IsFalse(response.IsDownloaderTimeout);
+        }
+
+        [TestMethod]
+        [Timeout(5000)]
+        public async Task DownloadingTest1()
+        {
+            _instanceShim.GetHttpClientRequestIWebProxy = (_1, _2) => new HttpClient();
+            ShimHttpClientDownloader.GenerateHttpRequestMessageRequest = _ => new HttpRequestMessage();
+            _instance.Timeout = TimeSpan.MinValue;
+            int callTimes = 0;
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                ErrorObjectException = (_, e) =>
+                {
+                    ++callTimes;
+                    Assert.IsInstanceOfType(e, typeof(ArgumentOutOfRangeException));
+                }
+            };
+            await (Task<Response>)_private.Invoke("Downloading", new Request(), (IWebProxy)null);
+            Assert.AreEqual(1, callTimes);
+        }
+
+        [TestMethod]
+        [Timeout(5000)]
+        public async Task DownloadingTest2()
+        {
+            _instance.Timeout = TimeSpan.FromMilliseconds(1);
+            using HttpClient http = new HttpClient();
+            System.Net.Http.Fakes.ShimHttpClient shimHttp = new System.Net.Http.Fakes.ShimHttpClient(http)
+            {
+                SendAsyncHttpRequestMessageCancellationToken = async (_, token) =>
+                {
+                    await Task.Delay(100);
+                    token.ThrowIfCancellationRequested();
+                    return new HttpResponseMessage();
+                }
+            };
+            _instanceShim.GetHttpClientRequestIWebProxy = (_1, _2) => http;
+            Response response = await (Task<Response>)_private.Invoke("Downloading", new Request(), (IWebProxy)null);
+            Assert.AreEqual(HttpStatusCode.RequestTimeout, response.StatusCode);
+            Assert.IsTrue(response.IsDownloaderTimeout);
+        }
+
+        [TestMethod]
+        [Timeout(5000)]
+        public async Task DownloadingTest3()
+        {
+            using HttpClient http = new HttpClient();
+            System.Net.Http.Fakes.ShimHttpClient shimHttp = new System.Net.Http.Fakes.ShimHttpClient(http)
+            {
+                SendAsyncHttpRequestMessageCancellationToken = (_, token) =>
+                {
+                    throw new Exception("", new IOException());
+                }
+            };
+            _instanceShim.GetHttpClientRequestIWebProxy = (_1, _2) => http;
+            Response response = await (Task<Response>)_private.Invoke("Downloading", new Request(), (IWebProxy)null);
+            Assert.AreEqual(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+            Assert.IsFalse(response.IsDownloaderTimeout);
+        }
+
+        [TestMethod]
+        [Timeout(5000)]
+        public async Task DownloadingTest4()
+        {
+            using HttpClient http = new HttpClient();
+            System.Net.Http.Fakes.ShimHttpClient shimHttp = new System.Net.Http.Fakes.ShimHttpClient(http)
+            {
+                SendAsyncHttpRequestMessageCancellationToken = (_1, _2) =>
+                {
+                    throw new Exception("", new IOException());
+                }
+            };
+            _instanceShim.GetHttpClientRequestIWebProxy = (_1, _2) => http;
+            int callTimes = 0;
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                WarnObject = (s) =>
+                {
+                    StringAssert.StartsWith((string)s, "HTTP request failed：");
+                    ++callTimes;
+                }
+            };
+            Response response = await (Task<Response>)_private.Invoke("Downloading", new Request(), (IWebProxy)null);
+            Assert.AreEqual(1, callTimes);
+        }
+
+        [TestMethod]
+        [Timeout(5000)]
+        public async Task DownloadingTest5()
+        {
+            Exception exception = new Exception();
+            using HttpClient http = new HttpClient();
+            System.Net.Http.Fakes.ShimHttpClient shimHttp = new System.Net.Http.Fakes.ShimHttpClient(http)
+            {
+                SendAsyncHttpRequestMessageCancellationToken = (_1, _2) =>
+                {
+                    throw exception;
+                }
+            };
+            _instanceShim.GetHttpClientRequestIWebProxy = (_1, _2) => http;
+            int callTimes = 0;
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                ErrorObjectException = (s, e) =>
+                {
+                    StringAssert.StartsWith((string)s, "HTTP request failed unexpectedly ：");
+                    Assert.AreSame(exception, e);
+                    ++callTimes;
+                }
+            };
+            await (Task<Response>)_private.Invoke("Downloading", new Request(), (IWebProxy)null);
+            Assert.AreEqual(1, callTimes);
+        }
+
+        [TestMethod]
+        [Timeout(5000)]
+        public async Task DownloadingTest6()
+        {
+            Exception exception = new Exception();
+            using HttpClient http = new HttpClient();
+            System.Net.Http.Fakes.ShimHttpClient shimHttp = new System.Net.Http.Fakes.ShimHttpClient(http)
+            {
+                SendAsyncHttpRequestMessageCancellationToken = (_1, _2) => Task.FromResult(new HttpResponseMessage())
+            };
+            _instanceShim.GetHttpClientRequestIWebProxy = (_1, _2) => http;
+            _instanceShim.GenerateResponseResponseHttpResponseMessage = (response, _) =>
+            {
+                response.StatusCode = HttpStatusCode.OK;
+                return Task.FromResult(response);
+            };
+            var response = await (Task<Response>)_private.Invoke("Downloading", new Request(), (IWebProxy)null);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         }
         #endregion
 
@@ -298,13 +446,14 @@ namespace DotnetSpider.Downloader.Tests
                 StatusCode = HttpStatusCode.OK
             };
             Response response = new Response();
-            await (Task)_private.Invoke("GenerateResponse", response, responseMessage);
+            var output = await (Task<Response>)_private.Invoke("GenerateResponse", response, responseMessage);
 
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
             Assert.AreEqual("https://www.baidu.com/", response.TargetUrl);
             Assert.IsNull(response.Content);
             Assert.IsNotNull(response.ContentType);
             Assert.AreEqual(0, response.ContentType.Length);
+            Assert.AreSame(response, output);
         }
 
         [TestMethod]

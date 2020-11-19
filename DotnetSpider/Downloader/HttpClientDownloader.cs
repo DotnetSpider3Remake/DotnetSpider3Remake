@@ -83,9 +83,9 @@ namespace DotnetSpider.Downloader
                     using var httpResponse = await httpClient.SendAsync(message, cts.Token);
                     await GenerateResponse(response, httpResponse);
                 }
-                catch (TaskCanceledException e)
+                catch (Exception e)
                 {
-                    if (e.CancellationToken == cts.Token)
+                    if (cts.IsCancellationRequested)
                     {
                         response.StatusCode = HttpStatusCode.RequestTimeout;
                         response.IsDownloaderTimeout = true;
@@ -348,7 +348,7 @@ namespace DotnetSpider.Downloader
         /// <param name="response">目的响应</param>
         /// <param name="httpResponse">来源响应</param>
         /// <returns></returns>
-        private async Task GenerateResponse(Response response, HttpResponseMessage httpResponse)
+        private async Task<Response> GenerateResponse(Response response, HttpResponseMessage httpResponse)
         {
             response.StatusCode = httpResponse.StatusCode;
             AppendResponseHeaders(response.Headers, httpResponse.Headers);
@@ -371,6 +371,8 @@ namespace DotnetSpider.Downloader
             {
                 response.ContentType = string.Empty;
             }
+
+            return response;
         }
         #endregion
     }
