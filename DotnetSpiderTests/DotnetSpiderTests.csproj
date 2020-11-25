@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net472</TargetFrameworks>
     <IsPackable>false</IsPackable>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>9.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +12,7 @@
     <None Remove="FakesAssemblies\**" />
     <AdditionalDesignTimeBuildInput Remove="FakesAssemblies\**" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' != 'netframework'">
      <Compile Remove="PrivateObjectPrivateType.cs" />
      <EmbeddedResource Remove="PrivateObjectPrivateType.cs" />
      <None Remove="PrivateObjectPrivateType.cs" />
@@ -20,8 +20,8 @@
   </ItemGroup>  
   
   <ItemGroup>
-      <PackageReference Include="log4net" Version="2.0.11" />
-      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
+      <PackageReference Include="log4net" Version="2.0.12" />
+      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0" />
       <PackageReference Include="Microsoft.QualityTools.Testing.Fakes" Version="16.7.4-beta.20330.2" />
       <PackageReference Include="MSTest.TestAdapter" Version="2.1.2" />
       <PackageReference Include="MSTest.TestFramework" Version="2.1.2" />
@@ -36,6 +36,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http" Condition="'$(TargetFramework.TrimEnd(`0123456789`))' != 'netframework'" />
   </ItemGroup>
 </Project>
