@@ -192,7 +192,7 @@ namespace DotnetSpider
                 }
             }
 
-            Scheduler.Clear();
+            Scheduler?.Clear();
             WaitFinished();
             return true;
         }
@@ -202,7 +202,7 @@ namespace DotnetSpider
             return await Task.Run(Exit);
         }
 
-        public bool Pause(Action action = null)
+        public bool Pause()
         {
             bool success;
             lock (_stateLocker)
@@ -218,17 +218,12 @@ namespace DotnetSpider
                 }
             }
 
-            if (success)
-            {
-                action?.Invoke();
-            }
-
             return success;
         }
 
-        public async Task<bool> PauseAsync(Action action = null)
+        public async Task<bool> PauseAsync()
         {
-            return await Task.Run(() => Pause(action));
+            return await Task.Run(Pause);
         }
 
         public void Run()
@@ -278,9 +273,9 @@ namespace DotnetSpider
         {
             Exit();
 
-            Scheduler.Dispose();
+            Scheduler?.Dispose();
             Scheduler = null;
-            Downloader.Dispose();
+            Downloader?.Dispose();
             Downloader = null;
             foreach (var i in Pipelines)
             {
