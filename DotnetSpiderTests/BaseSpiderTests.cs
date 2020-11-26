@@ -151,28 +151,97 @@ namespace DotnetSpider.Tests
         }
 
         [TestMethod()]
-        public void PauseTest()
+        [Timeout(5000)]
+        public async Task ExitAsyncTest1()
         {
-            Assert.Fail();
+            _private.SetField("_hasExit", false);
+            int called = 0;
+            _instance.Scheduler = new Scheduler.Fakes.StubIScheduler()
+            {
+                Clear = () => ++called
+            };
+            Assert.IsTrue(await _instance.ExitAsync());
+            Assert.AreEqual(1, called);
+            Assert.IsTrue((bool)_private.GetField("_hasExit"));
         }
 
         [TestMethod()]
-        public void PauseAsyncTest()
+        [Timeout(5000)]
+        public async Task ExitAsyncTest2()
         {
-            Assert.Fail();
+            _private.SetField("_hasExit", false);
+            Assert.IsTrue(await _instance.ExitAsync());
+            Assert.IsTrue((bool)_private.GetField("_hasExit"));
         }
 
         [TestMethod()]
-        public void RunTest()
+        public void PauseTest0()
         {
-            Assert.Fail();
+            _private.SetField("_hasExit", true);
+            _private.SetField("_isRunning", false);
+            Assert.IsFalse(_instance.Pause());
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
         }
 
         [TestMethod()]
-        public void RunAsyncTest()
+        public void PauseTest1()
         {
-            Assert.Fail();
+            _private.SetField("_hasExit", false);
+            _private.SetField("_isRunning", true);
+            Assert.IsTrue(_instance.Pause());
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
         }
+
+        [TestMethod()]
+        public void PauseTest2()
+        {
+            _private.SetField("_hasExit", false);
+            _private.SetField("_isRunning", false);
+            Assert.IsFalse(_instance.Pause());
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task PauseAsyncTest0()
+        {
+            _private.SetField("_hasExit", true);
+            _private.SetField("_isRunning", false);
+            Assert.IsFalse(await _instance.PauseAsync());
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task PauseAsyncTest1()
+        {
+            _private.SetField("_hasExit", false);
+            _private.SetField("_isRunning", true);
+            Assert.IsTrue(await _instance.PauseAsync());
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task PauseAsyncTest2()
+        {
+            _private.SetField("_hasExit", false);
+            _private.SetField("_isRunning", false);
+            Assert.IsFalse(await _instance.PauseAsync());
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
+        }
+
+        //[TestMethod()]
+        //public void RunTest()
+        //{
+        //    Assert.Fail();
+        //}
+
+        //[TestMethod()]
+        //public void RunAsyncTest()
+        //{
+        //    Assert.Fail();
+        //}
         #endregion
     }
 }
