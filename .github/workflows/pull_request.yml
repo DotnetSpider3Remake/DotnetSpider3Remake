@@ -24,7 +24,4 @@ jobs:
       run: MSBuild -property:Configuration=Release
         
     - name: Test
-      run: VSTest.Console DotnetSpiderTests\bin\Release\*\DotnetSpiderTests.dll
-      
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      run: VSTest.Console /Enablecodecoverage DotnetSpiderTests\bin\Release\*\DotnetSpiderTests.dll
