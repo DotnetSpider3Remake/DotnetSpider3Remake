@@ -25,3 +25,6 @@ jobs:
         
     - name: Test
       run: VSTest.Console DotnetSpiderTests\bin\Release\*\DotnetSpiderTests.dll
+      
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
