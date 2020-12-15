@@ -401,7 +401,7 @@ namespace DotnetSpider
 
         #region 抽象函数
         /// <summary>
-        /// 运行爬虫线程
+        /// 运行爬虫线程，不应该抛出异常。
         /// </summary>
         protected abstract void RunSpiderThread();
         #endregion

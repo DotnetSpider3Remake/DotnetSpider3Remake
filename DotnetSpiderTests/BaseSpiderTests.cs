@@ -6,9 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.QualityTools.Testing.Fakes;
+using System.Threading;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DotnetSpider.Tests
 {
+    [ExcludeFromCodeCoverage]
     [TestClass()]
     public class BaseSpiderTests
     {
@@ -35,13 +38,13 @@ namespace DotnetSpider.Tests
         [TestCleanup]
         public void Clean()
         {
+            _shimsContext.Dispose();
+            _shimsContext = null;
             _type = null;
             _private = null;
             _instanceShim = null;
             _instance.Dispose();
             _instance = null;
-            _shimsContext.Dispose();
-            _shimsContext = null;
         }
         #endregion
 
@@ -231,17 +234,194 @@ namespace DotnetSpider.Tests
             Assert.IsFalse((bool)_private.GetField("_isRunning"));
         }
 
-        //[TestMethod()]
-        //public void RunTest()
-        //{
-        //    Assert.Fail();
-        //}
+        [TestMethod()]
+        public void RunTest0()
+        {
+            _instanceShim.InitLogger = Assert.Fail;
+            _instanceShim.InitSpider = Assert.Fail;
+            _instanceShim.Exit = () =>
+            {
+                Assert.Fail();
+                return false;
+            };
+            _instanceShim.CheckConfiguration = () => 
+            { 
+                Assert.Fail();
+                return false; 
+            };
+            _private.SetField("_hasStarted", true);
+            _instance.Run();
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
+        }
 
-        //[TestMethod()]
-        //public void RunAsyncTest()
-        //{
-        //    Assert.Fail();
-        //}
+        [TestMethod()]
+        public void RunTest1()
+        {
+            int calledIndex = 0;
+            _instanceShim.InitLogger = () =>
+            {
+                Assert.AreEqual(2, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+            };
+            _instanceShim.InitSpider = () =>
+            {
+                Assert.AreEqual(1, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+            };
+            _instanceShim.Exit = () =>
+            {
+                Assert.AreEqual(4, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+                _private.SetField("_isRunning", false);
+                return true;
+            };
+            _instanceShim.CheckConfiguration = () =>
+            {
+                Assert.AreEqual(3, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+                return false;
+            };
+            _instance.Run();
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
+            Assert.AreEqual(4, calledIndex);
+        }
+
+        [TestMethod()]
+        public void RunTest2()
+        {
+            int calledIndex = 0;
+            _instanceShim.InitLogger = () =>
+            {
+                Assert.AreEqual(2, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+            };
+            _instanceShim.InitSpider = () =>
+            {
+                Assert.AreEqual(1, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+            };
+            _instanceShim.Exit = () =>
+            {
+                Assert.AreEqual(4, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+                _private.SetField("_isRunning", false);
+                return true;
+            };
+            _instanceShim.CheckConfiguration = () =>
+            {
+                Assert.AreEqual(3, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+                return false;
+            };
+            _instance.Run();
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
+            Assert.AreEqual(4, calledIndex);
+        }
+
+        [TestMethod()]
+        public void RunTest3()
+        {
+            Assert.AreEqual(1, _instance.Parallels);
+            int calledIndex = 0;
+            _instanceShim.InitLogger = () =>
+            {
+                Assert.AreEqual(2, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+            };
+            _instanceShim.InitSpider = () =>
+            {
+                Assert.AreEqual(1, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+            };
+            _instanceShim.CheckConfiguration = () =>
+            {
+                Assert.AreEqual(3, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+                return true;
+            };
+            _instance.RunSpiderThread01 = () =>
+            {
+                Assert.AreEqual(4, ++calledIndex);
+                Thread.Sleep(50);
+            };
+            _instanceShim.Exit = () =>
+            {
+                Assert.AreEqual(5, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+                _private.SetField("_isRunning", false);
+                return true;
+            };
+            _instance.Run();
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
+            Assert.AreEqual(5, calledIndex);
+        }
+
+
+        [TestMethod()]
+        public void RunTest4()
+        {
+            Assert.AreEqual(1, _instance.Parallels);
+            int calledIndex = 0;
+            string[] logs = new string[] { "Spider start.", "Spider exit." };
+            int logIndex = 0;
+            _instanceShim.InitLogger = () =>
+            {
+                Assert.AreEqual(2, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+                _instance.Logger = new log4net.Fakes.StubILog()
+                {
+                    InfoObject = o =>
+                    {
+                        string msg = o as string;
+                        Assert.IsTrue(logIndex < logs.Length);
+                        Assert.AreEqual(logs[logIndex++], msg);
+                    }
+                };
+            };
+            _instanceShim.InitSpider = () =>
+            {
+                Assert.AreEqual(1, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+            };
+            _instanceShim.CheckConfiguration = () =>
+            {
+                Assert.AreEqual(3, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+                return true;
+            };
+            _instance.ConditionOfStop = _ =>
+            {
+                Assert.Fail();
+                return false;
+            };
+            _instanceShim.StartThreadThreadStart = _ => Assert.AreEqual(4, ++calledIndex);
+            _instance.RunSpiderThread01 = () =>
+            {
+                Assert.AreEqual(5, ++calledIndex);
+                Thread.Sleep(50);
+            };
+            _instanceShim.Exit = () =>
+            {
+                Assert.AreEqual(6, ++calledIndex);
+                Assert.IsTrue((bool)_private.GetField("_isRunning"));
+                _private.SetField("_isRunning", false);
+                return true;
+            };
+            _instance.Run();
+            Assert.IsFalse((bool)_private.GetField("_isRunning"));
+            Assert.AreEqual(6, calledIndex);
+            Assert.AreEqual(logs.Length, logIndex);
+        }
+
+        [TestMethod()]
+        [Timeout(5000)]
+        public async Task RunAsyncTest()
+        {
+            int callTimes = 0;
+            _instanceShim.Run = () => ++callTimes;
+            await _instance.RunAsync();
+            Assert.AreEqual(1, callTimes);
+        }
         #endregion
     }
 }
