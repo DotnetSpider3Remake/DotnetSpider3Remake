@@ -79,28 +79,14 @@ namespace DotnetSpider.Tests
         [TestMethod()]
         public async Task ContinueAsyncTest0()
         {
-            _private.SetField("_hasExit", true);
-            _private.SetField("_isRunning", false);
+            int callTimes = 0;
+            _instanceShim.Continue = () => 
+            { 
+                ++callTimes; 
+                return false; 
+            };
             Assert.IsFalse(await _instance.ContinueAsync());
-            Assert.IsFalse((bool)_private.GetField("_isRunning"));
-        }
-
-        [TestMethod()]
-        public async Task ContinueAsyncTest1()
-        {
-            _private.SetField("_hasExit", false);
-            _private.SetField("_isRunning", true);
-            Assert.IsFalse(await _instance.ContinueAsync());
-            Assert.IsTrue((bool)_private.GetField("_isRunning"));
-        }
-
-        [TestMethod()]
-        public async Task ContinueAsyncTest2()
-        {
-            _private.SetField("_hasExit", false);
-            _private.SetField("_isRunning", false);
-            Assert.IsTrue(await _instance.ContinueAsync());
-            Assert.IsTrue((bool)_private.GetField("_isRunning"));
+            Assert.AreEqual(1, callTimes);
         }
 
         [TestMethod()]
@@ -144,37 +130,14 @@ namespace DotnetSpider.Tests
         [Timeout(5000)]
         public async Task ExitAsyncTest0()
         {
-            _private.SetField("_hasExit", true);
-            _instance.Scheduler = new Scheduler.Fakes.StubIScheduler()
+            int callTimes = 0;
+            _instanceShim.Exit = () =>
             {
-                Clear = Assert.Fail
+                ++callTimes;
+                return false;
             };
             Assert.IsFalse(await _instance.ExitAsync());
-            Assert.IsTrue((bool)_private.GetField("_hasExit"));
-        }
-
-        [TestMethod()]
-        [Timeout(5000)]
-        public async Task ExitAsyncTest1()
-        {
-            _private.SetField("_hasExit", false);
-            int called = 0;
-            _instance.Scheduler = new Scheduler.Fakes.StubIScheduler()
-            {
-                Clear = () => ++called
-            };
-            Assert.IsTrue(await _instance.ExitAsync());
-            Assert.AreEqual(1, called);
-            Assert.IsTrue((bool)_private.GetField("_hasExit"));
-        }
-
-        [TestMethod()]
-        [Timeout(5000)]
-        public async Task ExitAsyncTest2()
-        {
-            _private.SetField("_hasExit", false);
-            Assert.IsTrue(await _instance.ExitAsync());
-            Assert.IsTrue((bool)_private.GetField("_hasExit"));
+            Assert.AreEqual(1, callTimes);
         }
 
         [TestMethod()]
@@ -208,30 +171,14 @@ namespace DotnetSpider.Tests
         [Timeout(5000)]
         public async Task PauseAsyncTest0()
         {
-            _private.SetField("_hasExit", true);
-            _private.SetField("_isRunning", false);
+            int callTimes = 0;
+            _instanceShim.Pause = () =>
+            {
+                ++callTimes;
+                return false;
+            };
             Assert.IsFalse(await _instance.PauseAsync());
-            Assert.IsFalse((bool)_private.GetField("_isRunning"));
-        }
-
-        [TestMethod()]
-        [Timeout(5000)]
-        public async Task PauseAsyncTest1()
-        {
-            _private.SetField("_hasExit", false);
-            _private.SetField("_isRunning", true);
-            Assert.IsTrue(await _instance.PauseAsync());
-            Assert.IsFalse((bool)_private.GetField("_isRunning"));
-        }
-
-        [TestMethod()]
-        [Timeout(5000)]
-        public async Task PauseAsyncTest2()
-        {
-            _private.SetField("_hasExit", false);
-            _private.SetField("_isRunning", false);
-            Assert.IsFalse(await _instance.PauseAsync());
-            Assert.IsFalse((bool)_private.GetField("_isRunning"));
+            Assert.AreEqual(1, callTimes);
         }
 
         [TestMethod()]
