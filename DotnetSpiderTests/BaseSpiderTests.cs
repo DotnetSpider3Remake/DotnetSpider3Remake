@@ -370,5 +370,59 @@ namespace DotnetSpider.Tests
             Assert.AreEqual(1, callTimes);
         }
         #endregion
+
+        #region 可以在派生类中重新实现的函数的测试
+        [TestMethod]
+        public void DisposeOthersTest0()
+        {
+            int callTimes = 0;
+            _instanceShim.Exit = () =>
+            {
+                Assert.AreEqual(1, ++callTimes);
+                return true;
+            };
+            _private.Invoke("DisposeOthers");
+            Assert.AreEqual(1, callTimes);
+        }
+
+        [TestMethod]
+        public void DisposeOthersTest1()
+        {
+            int callTimes = 0;
+            _instanceShim.Exit = () =>
+            {
+                Assert.AreEqual(1, ++callTimes);
+                return true;
+            };
+            _instance.Scheduler = new Scheduler.Fakes.StubIScheduler
+            {
+                Dispose = () => Assert.AreEqual(2, ++callTimes)
+            };
+            _instance.Downloader = new Downloader.Fakes.StubIDownloader
+            {
+                Dispose = () => Assert.AreEqual(3, ++callTimes)
+            };
+            _instance.Pipelines.Add(new Pipeline.Fakes.StubIPipeline
+            {
+                Dispose = () => Assert.AreEqual(4, ++callTimes)
+            });
+            _instance.PageProcessors.Add(new Processor.Fakes.StubIResponseProcessor
+            {
+                Dispose = () => Assert.AreEqual(5, ++callTimes)
+            });
+            _instance.HttpProxy = new Proxy.Fakes.StubIHttpProxy
+            {
+                Dispose = () => Assert.AreEqual(6, ++callTimes)
+            };
+            _private.Invoke("DisposeOthers");
+            Assert.AreEqual(6, callTimes);
+        }
+
+        [TestMethod]
+        public void InitSpiderTest0()
+        {
+            _private.Invoke("InitSpider");
+        }
+        #endregion
     }
 }
