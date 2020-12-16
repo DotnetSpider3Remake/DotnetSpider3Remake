@@ -423,6 +423,25 @@ namespace DotnetSpider.Tests
         {
             _private.Invoke("InitSpider");
         }
+
+        [TestMethod]
+        public void InitLoggerTest0()
+        {
+            _instance.Logger = new log4net.Fakes.StubILog();
+            _instanceShim.SetLoggerIRecordable = _ => Assert.Fail();
+            _private.Invoke("InitLogger");
+        }
+
+        [TestMethod]
+        public void InitLoggerTest1()
+        {
+            int callTimes = 0;
+            _instanceShim.SetLoggerIRecordable = _ => ++callTimes;
+            _instance.Pipelines.Add(new Pipeline.Fakes.StubIPipeline());
+            _instance.PageProcessors.Add(new Processor.Fakes.StubIResponseProcessor());
+            _private.Invoke("InitLogger");
+            Assert.AreEqual(6, callTimes);
+        }
         #endregion
     }
 }

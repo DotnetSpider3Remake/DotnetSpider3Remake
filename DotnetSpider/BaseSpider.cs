@@ -335,7 +335,7 @@ namespace DotnetSpider
         /// <param name="rd">子部件，可能为null。</param>
         protected virtual void SetLogger(IRecordable rd)
         {
-            if (rd == null)
+            if (rd == null || rd.Logger != null)
             {
                 return;
             }
