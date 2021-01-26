@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.QualityTools.Testing.Fakes;
 using System.Threading;
 using System.Diagnostics.CodeAnalysis;
+using DotnetSpider.Monitor;
 
 namespace DotnetSpider.Tests
 {
@@ -441,6 +442,66 @@ namespace DotnetSpider.Tests
             _instance.PageProcessors.Add(new Processor.Fakes.StubIResponseProcessor());
             _private.Invoke("InitLogger");
             Assert.AreEqual(6, callTimes);
+        }
+
+        [TestMethod]
+        public void SetLoggerTest0()
+        {
+            _private.Invoke("SetLogger", (IRecordable)null);
+        }
+
+        [TestMethod]
+        public void SetLoggerTest1()
+        {
+            var logger = new log4net.Fakes.StubILog();
+            DotnetSpider.Monitor.Fakes.StubIRecordable rd = new Monitor.Fakes.StubIRecordable
+            {
+                LoggerGet = () => logger,
+                LoggerSetILog = v => Assert.Fail()
+            };
+            _private.Invoke("SetLogger", rd);
+        }
+
+        [TestMethod]
+        public void SetLoggerTest2()
+        {
+            log4net.ILog logger = null;
+            DotnetSpider.Monitor.Fakes.StubIRecordable rd = new Monitor.Fakes.StubIRecordable
+            {
+                LoggerGet = () => logger,
+                LoggerSetILog = v => logger = v,
+                NameGet = () => null
+            };
+            var expected = new log4net.Fakes.StubILog();
+            DotnetSpider.Logger.Fakes.ShimLoggerCreator.GetLoggerType = t => expected;
+            DotnetSpider.Logger.Fakes.ShimLoggerCreator.GetLoggerString = n =>
+            {
+                Assert.Fail();
+                return null;
+            };
+            _private.Invoke("SetLogger", rd);
+            Assert.AreSame(expected, logger);
+        }
+
+        [TestMethod]
+        public void SetLoggerTest3()
+        {
+            log4net.ILog logger = null;
+            DotnetSpider.Monitor.Fakes.StubIRecordable rd = new Monitor.Fakes.StubIRecordable
+            {
+                LoggerGet = () => logger,
+                LoggerSetILog = v => logger = v,
+                NameGet = () => "name"
+            };
+            var expected = new log4net.Fakes.StubILog();
+            DotnetSpider.Logger.Fakes.ShimLoggerCreator.GetLoggerType = t => 
+            {
+                Assert.Fail();
+                return null;
+            };
+            DotnetSpider.Logger.Fakes.ShimLoggerCreator.GetLoggerString = n => expected;
+            _private.Invoke("SetLogger", rd);
+            Assert.AreSame(expected, logger);
         }
         #endregion
     }
