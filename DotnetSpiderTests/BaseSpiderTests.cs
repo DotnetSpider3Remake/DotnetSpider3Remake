@@ -9,6 +9,7 @@ using Microsoft.QualityTools.Testing.Fakes;
 using System.Threading;
 using System.Diagnostics.CodeAnalysis;
 using DotnetSpider.Monitor;
+using Microsoft.QualityTools.Testing.Fakes.Stubs;
 
 namespace DotnetSpider.Tests
 {
@@ -18,6 +19,7 @@ namespace DotnetSpider.Tests
     {
         #region 全局设定
         private IDisposable _shimsContext = null;
+        private StubObserver _stubObserver = null;
         private Fakes.StubBaseSpider _instance = null;
         private Fakes.ShimBaseSpider _instanceShim = null;
         private PrivateObject _private = null;
@@ -27,9 +29,11 @@ namespace DotnetSpider.Tests
         public void Init()
         {
             _shimsContext = ShimsContext.Create();
+            _stubObserver = new StubObserver();
             _instance = new Fakes.StubBaseSpider
             {
-                CallBase = true
+                CallBase = true,
+                InstanceObserver = _stubObserver
             };
             _instanceShim = new Fakes.ShimBaseSpider(_instance);
             _type = new PrivateType(typeof(BaseSpider));
@@ -502,6 +506,326 @@ namespace DotnetSpider.Tests
             DotnetSpider.Logger.Fakes.ShimLoggerCreator.GetLoggerString = n => expected;
             _private.Invoke("SetLogger", rd);
             Assert.AreSame(expected, logger);
+        }
+
+        [TestMethod]
+        public void CheckConfigurationTest0()
+        {
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                FatalObject = o => Assert.Fail()
+            };
+            _instance.Scheduler = new DotnetSpider.Scheduler.Fakes.StubIScheduler();
+            _instance.Downloader = new DotnetSpider.Downloader.Fakes.StubIDownloader();
+            _instance.Pipelines.Add(new DotnetSpider.Pipeline.Fakes.StubIPipeline());
+            _instance.PageProcessors.Add(new DotnetSpider.Processor.Fakes.StubIResponseProcessor());
+            _instance.Parallels = 1;
+            Assert.IsTrue((bool)_private.Invoke("CheckConfiguration"));
+        }
+
+        [TestMethod]
+        public void CheckConfigurationTest1()
+        {
+            _instance.Parallels = 0;
+            _instance.RequestInterval = TimeSpan.FromSeconds(10);
+            _instance.FixedRequestDuration = TimeSpan.FromSeconds(10);
+            Assert.IsFalse((bool)_private.Invoke("CheckConfiguration"));
+        }
+
+        [TestMethod]
+        public void CheckConfigurationTest2()
+        {
+            int callTimes = 0;
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                FatalObject = o =>
+                {
+                    ++callTimes;
+                    Assert.AreEqual("Scheduler is null.", (string)o);
+                }
+            };
+            //_instance.Scheduler = new DotnetSpider.Scheduler.Fakes.StubIScheduler();
+            _instance.Downloader = new DotnetSpider.Downloader.Fakes.StubIDownloader();
+            _instance.Pipelines.Add(new DotnetSpider.Pipeline.Fakes.StubIPipeline());
+            _instance.PageProcessors.Add(new DotnetSpider.Processor.Fakes.StubIResponseProcessor());
+            _instance.Parallels = 1;
+            Assert.IsFalse((bool)_private.Invoke("CheckConfiguration"));
+            Assert.AreEqual(1, callTimes);
+        }
+
+        [TestMethod]
+        public void CheckConfigurationTest3()
+        {
+            int callTimes = 0;
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                FatalObject = o =>
+                {
+                    ++callTimes;
+                    Assert.AreEqual("Downloader is null.", (string)o);
+                }
+            };
+            _instance.Scheduler = new DotnetSpider.Scheduler.Fakes.StubIScheduler();
+            //_instance.Downloader = new DotnetSpider.Downloader.Fakes.StubIDownloader();
+            _instance.Pipelines.Add(new DotnetSpider.Pipeline.Fakes.StubIPipeline());
+            _instance.PageProcessors.Add(new DotnetSpider.Processor.Fakes.StubIResponseProcessor());
+            _instance.Parallels = 1;
+            Assert.IsFalse((bool)_private.Invoke("CheckConfiguration"));
+            Assert.AreEqual(1, callTimes);
+        }
+
+        [TestMethod]
+        public void CheckConfigurationTest4()
+        {
+            int callTimes = 0;
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                FatalObject = o =>
+                {
+                    ++callTimes;
+                    Assert.AreEqual("Pipelines are empty.", (string)o);
+                }
+            };
+            _instance.Scheduler = new DotnetSpider.Scheduler.Fakes.StubIScheduler();
+            _instance.Downloader = new DotnetSpider.Downloader.Fakes.StubIDownloader();
+            //_instance.Pipelines.Add(new DotnetSpider.Pipeline.Fakes.StubIPipeline());
+            _instance.PageProcessors.Add(new DotnetSpider.Processor.Fakes.StubIResponseProcessor());
+            _instance.Parallels = 1;
+            Assert.IsFalse((bool)_private.Invoke("CheckConfiguration"));
+            Assert.AreEqual(1, callTimes);
+        }
+
+        [TestMethod]
+        public void CheckConfigurationTest5()
+        {
+            int callTimes = 0;
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                FatalObject = o =>
+                {
+                    ++callTimes;
+                    Assert.AreEqual("PageProcessors are empty.", (string)o);
+                }
+            };
+            _instance.Scheduler = new DotnetSpider.Scheduler.Fakes.StubIScheduler();
+            _instance.Downloader = new DotnetSpider.Downloader.Fakes.StubIDownloader();
+            _instance.Pipelines.Add(new DotnetSpider.Pipeline.Fakes.StubIPipeline());
+            //_instance.PageProcessors.Add(new DotnetSpider.Processor.Fakes.StubIResponseProcessor());
+            _instance.Parallels = 1;
+            Assert.IsFalse((bool)_private.Invoke("CheckConfiguration"));
+            Assert.AreEqual(1, callTimes);
+        }
+
+        [TestMethod]
+        public void CheckConfigurationTest6()
+        {
+            int callTimes = 0;
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                FatalObject = o =>
+                {
+                    ++callTimes;
+                    Assert.AreEqual("Parallels is less than 1.", (string)o);
+                }
+            };
+            _instance.Scheduler = new DotnetSpider.Scheduler.Fakes.StubIScheduler();
+            _instance.Downloader = new DotnetSpider.Downloader.Fakes.StubIDownloader();
+            _instance.Pipelines.Add(new DotnetSpider.Pipeline.Fakes.StubIPipeline());
+            _instance.PageProcessors.Add(new DotnetSpider.Processor.Fakes.StubIResponseProcessor());
+            _instance.Parallels = 0;
+            Assert.IsFalse((bool)_private.Invoke("CheckConfiguration"));
+            Assert.AreEqual(1, callTimes);
+        }
+
+        [TestMethod]
+        public void CheckConfigurationTest7()
+        {
+            int callTimes = 0;
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                FatalObject = o =>
+                {
+                    ++callTimes;
+                    Assert.AreEqual("RequestInterval and FixedRequestDuration can not exist both.", (string)o);
+                }
+            };
+            _instance.Scheduler = new DotnetSpider.Scheduler.Fakes.StubIScheduler();
+            _instance.Downloader = new DotnetSpider.Downloader.Fakes.StubIDownloader();
+            _instance.Pipelines.Add(new DotnetSpider.Pipeline.Fakes.StubIPipeline());
+            _instance.PageProcessors.Add(new DotnetSpider.Processor.Fakes.StubIResponseProcessor());
+            _instance.Parallels = 1;
+            _instance.RequestInterval = TimeSpan.FromSeconds(10);
+            _instance.FixedRequestDuration = TimeSpan.FromSeconds(10);
+            Assert.IsFalse((bool)_private.Invoke("CheckConfiguration"));
+            Assert.AreEqual(1, callTimes);
+        }
+
+        [TestMethod]
+        public void CheckConfigurationTest8()
+        {
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                FatalObject = o => Assert.Fail()
+            };
+            _instance.Scheduler = new DotnetSpider.Scheduler.Fakes.StubIScheduler();
+            _instance.Downloader = new DotnetSpider.Downloader.Fakes.StubIDownloader();
+            _instance.Pipelines.Add(new DotnetSpider.Pipeline.Fakes.StubIPipeline());
+            _instance.PageProcessors.Add(new DotnetSpider.Processor.Fakes.StubIResponseProcessor());
+            _instance.Parallels = 1;
+            _instance.RequestInterval = TimeSpan.FromSeconds(10);
+            Assert.IsTrue((bool)_private.Invoke("CheckConfiguration"));
+        }
+
+        [TestMethod]
+        public void CheckConfigurationTest9()
+        {
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                FatalObject = o => Assert.Fail()
+            };
+            _instance.Scheduler = new DotnetSpider.Scheduler.Fakes.StubIScheduler();
+            _instance.Downloader = new DotnetSpider.Downloader.Fakes.StubIDownloader();
+            _instance.Pipelines.Add(new DotnetSpider.Pipeline.Fakes.StubIPipeline());
+            _instance.PageProcessors.Add(new DotnetSpider.Processor.Fakes.StubIResponseProcessor());
+            _instance.Parallels = 1;
+            _instance.FixedRequestDuration = TimeSpan.FromSeconds(10);
+            Assert.IsTrue((bool)_private.Invoke("CheckConfiguration"));
+        }
+        #endregion
+
+        #region 保护方法
+        [TestMethod]
+        public void AddSuccessTest()
+        {
+            _private.SetField("_countSuccess", 1);
+            _private.Invoke("AddSuccess");
+            Assert.AreEqual(2, (long)_private.GetField("_countSuccess"));
+        }
+
+        [TestMethod]
+        public void AddStartingTest()
+        {
+            _private.SetField("_countStarted", 1);
+            _private.Invoke("AddStarting");
+            Assert.AreEqual(2, (long)_private.GetField("_countStarted"));
+        }
+
+        [TestMethod]
+        public void AddFailedTest()
+        {
+            _private.SetField("_countFailed", 1);
+            _private.Invoke("AddFailed");
+            Assert.AreEqual(2, (long)_private.GetField("_countFailed"));
+        }
+        #endregion
+
+        #region 私有方法
+        [TestMethod]
+        [Timeout(5000)]
+        public void JudgeConditionThreadTest0()
+        {
+            _instance.ConditionOfStop = _ =>
+            {
+                Assert.Fail();
+                return false;
+            };
+            _instanceShim.IsRunningGet = () => false;
+            _instanceShim.Exit = () => 
+            {
+                Assert.Fail();
+                return true;
+            };
+            _private.Invoke("JudgeConditionThread");
+        }
+
+        [TestMethod]
+        [Timeout(5000)]
+        public void JudgeConditionThreadTest1()
+        {
+            int callJudge = 0;
+            int callExit = 0;
+            _instance.ConditionOfStop = _ =>
+            {
+                ++callJudge;
+                return true;
+            };
+            _instanceShim.IsRunningGet = () => true;
+            _instanceShim.Exit = () =>
+            {
+                ++callExit;
+                return true;
+            };
+            _private.Invoke("JudgeConditionThread");
+            Assert.AreEqual(1, callJudge);
+            Assert.AreEqual(1, callExit);
+        }
+
+        [TestMethod]
+        [Timeout(5000)]
+        public void JudgeConditionThreadTest2()
+        {
+            int callJudge = 0;
+            int callExit = 0;
+            _instance.ConditionOfStop = _ =>
+            {
+                if (++callJudge == 1)
+                {
+                    throw new Exception();
+                }
+                else
+                {
+                    return true;
+                }
+            };
+            _instanceShim.IsRunningGet = () => true;
+            _instanceShim.Exit = () =>
+            {
+                ++callExit;
+                return true;
+            };
+            _private.Invoke("JudgeConditionThread");
+            Assert.AreEqual(2, callJudge);
+            Assert.AreEqual(1, callExit);
+        }
+
+        [TestMethod]
+        [Timeout(5000)]
+        public void JudgeConditionThreadTest3()
+        {
+            int callJudge = 0;
+            int callExit = 0;
+            int callLogger = 0;
+            _instance.ConditionOfStop = _ =>
+            {
+                ++callJudge;
+                switch (callJudge)
+                {
+                    case 1:
+                        throw new Exception();
+                    case 2:
+                        return false;
+                    default:
+                        return true;
+                }
+            };
+            _instanceShim.IsRunningGet = () => true;
+            _instanceShim.Exit = () =>
+            {
+                ++callExit;
+                return true;
+            };
+            _instance.Logger = new log4net.Fakes.StubILog()
+            {
+                ErrorObject = o =>
+                {
+                    ++callLogger;
+                    StringAssert.StartsWith((string)o, "Exception ocurred when judge stop condition.Exception:");
+                }
+            };
+            _private.Invoke("JudgeConditionThread");
+            Assert.AreEqual(3, callJudge);
+            Assert.AreEqual(1, callExit);
+            Assert.AreEqual(1, callLogger);
         }
         #endregion
     }

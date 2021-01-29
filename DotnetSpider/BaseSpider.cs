@@ -9,6 +9,7 @@ using DotnetSpider.Scheduler;
 using log4net;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -480,6 +481,7 @@ namespace DotnetSpider
         /// 启动新线程。
         /// </summary>
         /// <param name="fun">线程函数</param>
+        [ExcludeFromCodeCoverage]//由于Thread无法Shim，跳过。
         private void StartThread(ThreadStart fun)
         {
             Thread thread = new Thread(fun);
