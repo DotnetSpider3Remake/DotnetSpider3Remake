@@ -828,5 +828,31 @@ namespace DotnetSpider.Tests
             Assert.AreEqual(1, callLogger);
         }
         #endregion
+
+        #region 公共属性
+        [TestMethod]
+        public void MaxRetryTest()
+        {
+            Assert.AreEqual(2u, _instance.MaxRetry);
+            _instance.MaxRetry = 3;
+            Assert.AreEqual(3u, _instance.MaxRetry);
+        }
+
+        [TestMethod]
+        public void RetryIntervalTest()
+        {
+            Assert.AreEqual(TimeSpan.FromSeconds(1), _instance.RetryInterval);
+            _instance.RetryInterval = TimeSpan.FromSeconds(2);
+            Assert.AreEqual(TimeSpan.FromSeconds(2), _instance.RetryInterval);
+        }
+
+        [TestMethod]
+        public void NameTest()
+        {
+            Assert.AreEqual("Spider", _instance.Name);
+            _instance.Name = "HEHE";
+            Assert.AreEqual("HEHE", _instance.Name);
+        }
+        #endregion
     }
 }
