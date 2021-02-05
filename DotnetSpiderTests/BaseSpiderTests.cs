@@ -853,6 +853,99 @@ namespace DotnetSpider.Tests
             _instance.Name = "HEHE";
             Assert.AreEqual("HEHE", _instance.Name);
         }
+
+        [TestMethod]
+        public void IsRunningTest0()
+        {
+            _private.SetField("_isRunning", false);
+            _private.SetField("_hasExit", false);
+            Assert.IsFalse(_instance.IsRunning);
+        }
+
+        [TestMethod]
+        public void IsRunningTest1()
+        {
+            _private.SetField("_isRunning", true);
+            _private.SetField("_hasExit", true);
+            Assert.IsFalse(_instance.IsRunning);
+        }
+
+        [TestMethod]
+        public void IsRunningTest2()
+        {
+            _private.SetField("_isRunning", true);
+            _private.SetField("_hasExit", false);
+            Assert.IsTrue(_instance.IsRunning);
+        }
+
+        [TestMethod]
+        public void IsRunningTest3()
+        {
+            _private.SetField("_isRunning", false);
+            _private.SetField("_hasExit", true);
+            Assert.IsFalse(_instance.IsRunning);
+        }
+
+        [TestMethod]
+        public void HasExitTest()
+        {
+            Assert.IsFalse(_instance.HasExit);
+            _private.SetField("_hasExit", true);
+            Assert.IsTrue(_instance.HasExit);
+        }
+
+        [TestMethod]
+        public void HasStartedTest()
+        {
+            Assert.IsFalse(_instance.HasStarted);
+            _private.SetField("_hasStarted", true);
+            Assert.IsTrue(_instance.HasStarted);
+        }
+
+        [TestMethod]
+        public void SuccessTest()
+        {
+            Assert.AreEqual<long>(0, _instance.Success);
+            _private.SetField("_countSuccess", 1);
+            Assert.AreEqual<long>(1, _instance.Success);
+        }
+
+        [TestMethod]
+        public void FailedTest()
+        {
+            Assert.AreEqual<long>(0, _instance.Failed);
+            _private.SetField("_countFailed", 1);
+            Assert.AreEqual<long>(1, _instance.Failed);
+        }
+
+        [TestMethod]
+        public void FinishedTest()
+        {
+            Assert.AreEqual<long>(0, _instance.Finished);
+            _private.SetField("_countSuccess", 1);
+            _private.SetField("_countFailed", 2);
+            Assert.AreEqual<long>(3, _instance.Finished);
+        }
+
+
+        [TestMethod]
+        public void StartedTest()
+        {
+            Assert.AreEqual<long>(0, _instance.Started);
+            _private.SetField("_countStarted", 1);
+            Assert.AreEqual<long>(1, _instance.Started);
+        }
+
+
+        [TestMethod]
+        public void UnfinishedTest()
+        {
+            Assert.AreEqual<long>(0, _instance.Unfinished);
+            _private.SetField("_countStarted", 5);
+            _private.SetField("_countSuccess", 1);
+            _private.SetField("_countFailed", 2);
+            Assert.AreEqual<long>(2, _instance.Unfinished);
+        }
         #endregion
     }
 }
