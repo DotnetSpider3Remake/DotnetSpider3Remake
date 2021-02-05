@@ -14,5 +14,10 @@ namespace DotnetSpider.Monitor
         /// ISpider的实现需要初始化此属性，并初始化它成员中的其他IRecordable.Logger。
         /// </summary>
         ILog Logger { get; set; }
+
+        /// <summary>
+        /// 实例名称。
+        /// </summary>
+        string Name { get; set; }
     }
 }

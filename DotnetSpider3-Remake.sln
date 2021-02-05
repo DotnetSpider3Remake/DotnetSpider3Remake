@@ -3,13 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotnetSpider", "DotnetSpider\DotnetSpider.csproj", "{A3FC7CB9-1E4F-4748-BAB4-6E9C4FD36CB4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotnetSpider", "DotnetSpider\DotnetSpider.csproj", "{A3FC7CB9-1E4F-4748-BAB4-6E9C4FD36CB4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CA744041-A05A-488E-AC70-BEF1FFBE483A}"
 	ProjectSection(SolutionItems) = preProject
 		LICENSE = LICENSE
 		README.MD = README.MD
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotnetSpiderTests", "DotnetSpiderTests\DotnetSpiderTests.csproj", "{E6911B83-B91D-44F9-A447-8C321C01959A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{19FB1FBF-39B9-4233-B920-1FC86261A595}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetBaiduLinks", "Examples\GetBaiduLinks\GetBaiduLinks.csproj", "{D36D4F4F-D706-4EE0-B0D6-279DCEB293F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +27,20 @@ Global
 		{A3FC7CB9-1E4F-4748-BAB4-6E9C4FD36CB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3FC7CB9-1E4F-4748-BAB4-6E9C4FD36CB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3FC7CB9-1E4F-4748-BAB4-6E9C4FD36CB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6911B83-B91D-44F9-A447-8C321C01959A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6911B83-B91D-44F9-A447-8C321C01959A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6911B83-B91D-44F9-A447-8C321C01959A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6911B83-B91D-44F9-A447-8C321C01959A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D36D4F4F-D706-4EE0-B0D6-279DCEB293F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D36D4F4F-D706-4EE0-B0D6-279DCEB293F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D36D4F4F-D706-4EE0-B0D6-279DCEB293F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D36D4F4F-D706-4EE0-B0D6-279DCEB293F1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D36D4F4F-D706-4EE0-B0D6-279DCEB293F1} = {19FB1FBF-39B9-4233-B920-1FC86261A595}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F3C74564-80EA-4273-884D-772C08AE772B}

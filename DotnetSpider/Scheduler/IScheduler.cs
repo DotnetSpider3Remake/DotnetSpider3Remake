@@ -2,6 +2,7 @@ using DotnetSpider.Monitor;
 using DotnetSpider.Downloader;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DotnetSpider.Scheduler
 {
@@ -12,7 +13,12 @@ namespace DotnetSpider.Scheduler
     public interface IScheduler : IDisposable, IRecordable
     {
         /// <summary>
-        /// 遍历方式
+        /// 剩余的请求数量。
+        /// </summary>
+        long Count { get; }
+
+        /// <summary>
+        /// 遍历方式，仅能在任务运行前修改。
         /// </summary>
         TraverseStrategy TraverseStrategy { get; set; }
 
@@ -29,10 +35,40 @@ namespace DotnetSpider.Scheduler
         void Push(IEnumerable<Request> requests);
 
         /// <summary>
-        /// 取得一个需要处理的请求对象
+        /// 异步添加请求对象到队列
         /// </summary>
-        /// <returns>请求对象</returns>
+        /// <param name="request">请求对象</param>
+        Task PushAsync(Request request);
+
+        /// <summary>
+        /// 异步添加多个请求对象到队列。
+        /// </summary>
+        /// <param name="requests">请求对象们</param>
+        Task PushAsync(IEnumerable<Request> requests);
+
+        /// <summary>
+        /// 取得一个需要处理的请求对象。
+        /// 如果队列为空，会一直阻塞等待。
+        /// 仅在执行Dispose后返回null。
+        /// </summary>
+        /// <returns>请求对象，仅在执行Dispose后返回null。</returns>
         Request Poll();
+
+        /// <summary>
+        /// 异步取得一个需要处理的请求对象。
+        /// 仅在执行Dispose后返回null。
+        /// </summary>
+        /// <returns>请求对象，仅在执行Dispose后返回null。</returns>
+        Task<Request> PollAsync();
+
+        /// <summary>
+        /// 取得一个需要处理的请求对象。
+        /// 如果队列为空，会一直阻塞等待<paramref name="timeout"/>时间。
+        /// 执行Dispose后或超时返回null。
+        /// </summary>
+        /// <param name="timeout">最大等待时间</param>
+        /// <returns>执行Dispose后或超时返回null。</returns>
+        Request Poll(TimeSpan timeout);
 
         /// <summary>
         /// 清空队列
